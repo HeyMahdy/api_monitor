@@ -36,7 +36,7 @@ export const findUserByEmail = async (email: string): Promise<User | null> => {
   try {
     const result = await pool.query(sql, [email]);
     console.log('Query result received, rows found:', result.rowCount);
-    return result.rows[0] || null;
+    return result.rows[0] ;
   } catch (error) {
     console.error('Error in findUserByEmail:', error);
     throw error;
