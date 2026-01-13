@@ -1,5 +1,9 @@
 import { neon, neonConfig } from '@neondatabase/serverless';
 import { Pool } from '@neondatabase/serverless';
+// Provide a WebSocket implementation for environments (like Node) where
+// a global WebSocket is not available. Neon serverless client requires this
+// when connecting with the websocket-based connector.
+import WebSocket from 'ws';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -11,6 +15,10 @@ if (!process.env.DATABASE_URL) {
 
 // Configure Neon for better connection handling
 neonConfig.fetchConnectionCache = true;
+
+// Ensure a WebSocket constructor is available for Neon
+;(globalThis as any).WebSocket = (globalThis as any).WebSocket || WebSocket;
+neonConfig.webSocketConstructor = (globalThis as any).WebSocket;
 
 // Use Neon's Pool which supports parameterized queries like pg Pool
 // This is the recommended way for serverless databases
