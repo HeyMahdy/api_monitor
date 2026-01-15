@@ -325,3 +325,29 @@ export {};
  *       404:
  *         description: Error occurred while activating monitor
  */
+
+/**
+ * @openapi
+ * /api/dev/clear-db:
+ *   post:
+ *     tags:
+ *       - Dev Utilities
+ *     summary: Clear the entire database (Dev only)
+ *     description: Deletes all rows from monitors and users tables. Use with caution!
+ *     responses:
+ *       200:
+ *         description: Database cleared successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 tables:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *       500:
+ *         description: Failed to clear database
+ */

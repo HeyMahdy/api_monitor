@@ -3,6 +3,7 @@ import cookieParser from 'cookie-parser';
 import { register, login } from '../src/controllers/auth.controller.js';
 import { authenticate } from '../src/middlewares/auth.middleware.js';
 import monitorRoutes from './routes/monitor.routes.js';
+import devRoutes from './routes/dev.routes.js';
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './swagger.js';
 
@@ -19,6 +20,12 @@ app.get('/docs', (req, res) => res.redirect('/api-docs'));
 app.post('/auth/register', register);
 app.post('/auth/login', login);
 app.use('/api/monitors', monitorRoutes);
+
+// Dev-only routes
+if (process.env.NODE_ENV !== 'production') {
+  app.use('/api/dev', devRoutes);
+}
+
 // Protected Routes
 app.get('/profile', authenticate, (req, res) => {
   res.json({ message: 'This is protected data', user: req.user });

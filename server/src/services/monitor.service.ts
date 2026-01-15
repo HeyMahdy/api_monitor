@@ -98,23 +98,29 @@ export const startMonitor = async (monitorId: string): Promise<boolean> => {
 
     await monitorRepo.setMonitorActiveStatus(monitorId, true);
 
+    console.log("this is the monitor id")
+    console.log(monitorId)
+
    
-    await myQueue.add(
-        'check-monitor-job', 
+    await myQueue.upsertJobScheduler(
+        monitorId,                          // jobSchedulerId
         {
-            monitorId: monitor.id,
-            url: monitor.url,
-            method: monitor.method,
-            headers: monitor.request_header,
-            body: monitor.request_body,
-            timeout: monitor.timeout,
-            userId: monitor.user_id 
+            every: monitor.check_interval * 1000  // repeatOpts
         },
         {
-            repeat: {
-                every: monitor.check_interval * 1000, 
+            name: 'monitor',                // jobTemplate.name (must match worker)
+            data: {                         // jobTemplate.data
+                monitorId: monitorId,
+                url: monitor.url,
+                method: monitor.method,
+                headers: monitor.request_header,
+                body: monitor.request_body,
+                timeout: monitor.timeout,
+                userId: monitor.user_id,
             },
-            jobId: monitorId 
+            opts: {                         // jobTemplate.opts
+                attempts: 3
+            }
         }
     );
 
