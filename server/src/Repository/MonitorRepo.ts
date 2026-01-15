@@ -10,7 +10,7 @@ export const createMonitor = async (data: CreateMonitorInput): Promise<Monitor> 
 
   const sql = `
     INSERT INTO monitors (
-      user_id, name, url, method, request_headers, request_body, 
+      user_id, name, url, method, request_header, request_body, 
       check_interval, timeout, is_active, status
     ) 
     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 
@@ -135,3 +135,18 @@ export const deleteMonitor = async (id: string, userId: string): Promise<boolean
   const result = await pool.query(sql, [id, userId]);
   return (result.rowCount || 0) > 0;
 };
+
+
+
+export const setMonitorActiveStatus = async (id: string, isActive: boolean): Promise<boolean> => {
+
+const sql  = `
+update monitors
+set is_active = $2 , updated_at = NOW()
+where id = $1;
+`;
+
+const result = await pool.query(sql,[id,isActive]);
+return (result.rowCount || 0) > 0;
+
+}

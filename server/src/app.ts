@@ -3,11 +3,17 @@ import cookieParser from 'cookie-parser';
 import { register, login } from '../src/controllers/auth.controller.js';
 import { authenticate } from '../src/middlewares/auth.middleware.js';
 import monitorRoutes from './routes/monitor.routes.js';
+import swaggerUi from 'swagger-ui-express';
+import swaggerSpec from './swagger.js';
 
 const app = express();
 
 app.use(express.json());
 app.use(cookieParser()); // Essential for reading cookies
+
+// Swagger API Documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.get('/docs', (req, res) => res.redirect('/api-docs'));
 
 // Public Routes
 app.post('/auth/register', register);

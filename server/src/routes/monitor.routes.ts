@@ -30,4 +30,7 @@ router.patch('/:id', monitorController.updateMonitor);
 // DELETE /api/monitors/:id
 router.delete('/:id', monitorController.deleteMonitor);
 
+
+router.post("/start/:id",monitorController.activeMonitor)
+
 export default router;

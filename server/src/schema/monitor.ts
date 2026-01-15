@@ -4,17 +4,16 @@ export const HttpMethodEnum = z.enum(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', '
 export const MonitorStatusEnum = z.enum(['PENDING', 'UP', 'DOWN', 'PAUSED']);
 
 export const MonitorSchema = z.object({
-    user_id : z.ulid(),
+    user_id : z.string(),
     name : z.string(),
-    url : z.httpUrl(),
+    url : z.string().url(),
     method : HttpMethodEnum,
-    satus:MonitorStatusEnum,
     request_header : z.record(z.string(),z.string()).optional().default({}),
     check_interval: z.number().int().min(10,"Minimum interval is 10 seconds"),
     timeout: z.number().int().min(1, "Minimum timeout is 1 second"),
     request_body : z.record(z.string(),z.string()).optional().default({}),
   
-  is_active: z.boolean().default(true),
+  is_active: z.boolean().default(false),
   status: MonitorStatusEnum.optional().default('PENDING'),
 });
 

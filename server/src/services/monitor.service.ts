@@ -1,6 +1,6 @@
 import * as monitorRepo from '../Repository/MonitorRepo.js'; 
 import type { CreateMonitorInput,Monitor, MonitorStatus } from '../schema/monitor.js';
-
+import myQueue  from '../queues/jobs/monitor.queue.js'
 
 
 export const createMonitor = async (data: CreateMonitorInput): Promise<Monitor> => {
@@ -9,7 +9,7 @@ export const createMonitor = async (data: CreateMonitorInput): Promise<Monitor> 
   return newMonitor;
 };
 
-/**
+/**P
  * Service: Get all monitors for a specific user
  */
 export const getUserMonitors = async (userId: string): Promise<Monitor[]> => {
@@ -68,15 +68,8 @@ export const deleteMonitor = async (monitorId: string, userId: string): Promise<
   }
 };
 
-// ==========================================
-// WORKER / INTERNAL SERVICES
-// (These are used by your background job, not by the user API)
-// ==========================================
 
-/**
- * Internal: Fetch all monitors that are active.
- * Used by the scheduler to decide what to ping.
- */
+ 
 export const getAllActiveMonitors = async (): Promise<Monitor[]> => {
   return await monitorRepo.findAllActiveMonitors();
 };
@@ -94,4 +87,36 @@ export const recordCheckResult = async (
 
 
 
+// ... other imports
 
+export const startMonitor = async (monitorId: string): Promise<boolean> => {
+
+    const monitor = await monitorRepo.findMonitorById(monitorId);
+    if (!monitor) {
+        throw new Error('Monitor not found');
+    }
+
+    await monitorRepo.setMonitorActiveStatus(monitorId, true);
+
+   
+    await myQueue.add(
+        'check-monitor-job', 
+        {
+            monitorId: monitor.id,
+            url: monitor.url,
+            method: monitor.method,
+            headers: monitor.request_header,
+            body: monitor.request_body,
+            timeout: monitor.timeout,
+            userId: monitor.user_id 
+        },
+        {
+            repeat: {
+                every: monitor.check_interval * 1000, 
+            },
+            jobId: monitorId 
+        }
+    );
+
+    return true;
+};
