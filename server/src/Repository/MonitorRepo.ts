@@ -150,3 +150,16 @@ const result = await pool.query(sql,[id,isActive]);
 return (result.rowCount || 0) > 0;
 
 }
+
+export const setMonitorInActiveStatus = async (id: string): Promise<boolean> => {
+
+const sql  = `
+update monitors
+set is_active = $2 , updated_at = NOW()
+where id = $1;
+`;
+
+const result = await pool.query(sql,[id,false]);
+return (result.rowCount || 0) > 0;
+
+}

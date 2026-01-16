@@ -98,10 +98,9 @@ export const startMonitor = async (monitorId: string): Promise<boolean> => {
 
     await monitorRepo.setMonitorActiveStatus(monitorId, true);
 
-    console.log("this is the monitor id")
-    console.log(monitorId)
+ 
 
-   
+     console.log("actibate run")
     await myQueue.upsertJobScheduler(
         monitorId,                          // jobSchedulerId
         {
@@ -126,3 +125,9 @@ export const startMonitor = async (monitorId: string): Promise<boolean> => {
 
     return true;
 };
+
+export const setMonitorInActiveStatus = async(monitorId: string):Promise<boolean> => {
+    const monitor = monitorRepo.setMonitorInActiveStatus(monitorId)
+    console.log("inactivate run")
+    return monitor;
+}

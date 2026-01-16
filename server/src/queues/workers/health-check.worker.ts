@@ -1,9 +1,9 @@
 // src/workers/monitor.worker.ts
 import { Worker, Job } from 'bullmq';
-import axios from 'axios';
-import  redisConnection  from '../../config/redis.js';
+import redisConnection from '../../config/redis.js';
+import { HealthCheckService } from '../../services/HealthCheck.service.js';
+import {setMonitorInActiveStatus} from '../../Repository/MonitorRepo.js'
 import monitorQueue from '../jobs/monitor.queue.js';
-// Define the interface for Type Safety
 interface MonitorJobData {
     monitorId: string;
     url: string;
@@ -19,30 +19,33 @@ const monitorWorker = new Worker(
         const { url, method, headers, body, timeout } = job.data;
         console.log(`[Job ${job.id}] Checking ${method} ${url}`);
         
-        try {
-            const response = await axios({
-                method: method,
-                url: url,
-                headers: headers,
-                data: body,
-                timeout: timeout * 1000
-            });
-            
-            return {
-                status: response.status,
-                outcome: 'UP',
-                time: new Date()
-            };
-        } catch (error: any) {
-            console.error(`[Job ${job.id}] Failed: ${error.message}`);
-            throw error;
+        // HealthCheckService already handles all errors internally
+        // Just await and return the result
+        const result = await HealthCheckService.check(
+            url, 
+            method, 
+            headers, 
+            body, 
+            timeout
+        );
+        
+        // Log the outcome
+        if (result.status) {
+            console.log(`[Job ${job.id}] Success: ${result.statusCode} in ${result.responseTimeMs}ms`);
+        } else {
+            console.error(`[Job ${job.id}] Failed: ${result.errorType} - ${result.errorMessage}`);
+            throw new Error;
         }
+        
+        return result;
     },
     {
         connection: redisConnection,
         concurrency: 10
     }
 );
+
+export default monitorWorker;
 
 monitorWorker.on('completed', (job, returnvalue) => {
     console.log(`✅ Job ${job.id} completed. Result:`, returnvalue);
@@ -62,6 +65,8 @@ monitorWorker.on('failed', async (job, error) => {
     try {
        
         const removed = await monitorQueue.removeJobScheduler(monitorId);
+        setMonitorInActiveStatus(monitorId)
+
         
         if (removed) {
             console.log(`✅ Monitor ${monitorId} stopped successfully.`);
