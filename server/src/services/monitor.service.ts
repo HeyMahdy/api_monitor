@@ -102,13 +102,13 @@ export const startMonitor = async (monitorId: string): Promise<boolean> => {
 
      console.log("actibate run")
     await myQueue.upsertJobScheduler(
-        monitorId,                          // jobSchedulerId
+        monitorId,                          
         {
-            every: monitor.check_interval * 1000  // repeatOpts
+            every: monitor.check_interval * 1000  
         },
         {
-            name: 'monitor',                // jobTemplate.name (must match worker)
-            data: {                         // jobTemplate.data
+            name: 'monitor',                
+            data: {                         
                 monitorId: monitorId,
                 url: monitor.url,
                 method: monitor.method,
@@ -117,8 +117,13 @@ export const startMonitor = async (monitorId: string): Promise<boolean> => {
                 timeout: monitor.timeout,
                 userId: monitor.user_id,
             },
-            opts: {                         // jobTemplate.opts
-                attempts: 3
+            opts: {                         
+                attempts: 3,
+                backoff: {
+                    type: 'fixed',  
+                   delay: 2000     
+                }
+
             }
         }
     );

@@ -16,28 +16,29 @@ interface MonitorJobData {
 const monitorWorker = new Worker(
     'monitor', 
     async (job: Job<MonitorJobData>) => {
-        const { url, method, headers, body, timeout } = job.data;
-        console.log(`[Job ${job.id}] Checking ${method} ${url}`);
+        const { monitorId, url, method, headers, body, timeout } = job.data;
+
+        console.log(`Job ${job.id} Checking ${method} ${url}`);
         
-        // HealthCheckService already handles all errors internally
-        // Just await and return the result
-        const result = await HealthCheckService.check(
-            url, 
-            method, 
-            headers, 
-            body, 
-            timeout
-        );
+        const result = await HealthCheckService.check(url, method, headers, body, timeout);
+       
         
-        // Log the outcome
         if (result.status) {
-            console.log(`[Job ${job.id}] Success: ${result.statusCode} in ${result.responseTimeMs}ms`);
+            console.log(`Job ${job.id} Success: ${result.statusCode} in ${result.responseTimeMs}ms`);
+            return result;
         } else {
-            console.error(`[Job ${job.id}] Failed: ${result.errorType} - ${result.errorMessage}`);
-            throw new Error;
+            
+            console.error(`[Job ${job.id}] Failed Health Check:`, {
+                statusCode: result.statusCode,
+                responseTime: result.responseTimeMs,
+                errorType: result.errorType,
+                errorMessage: result.errorMessage,
+            });
+            
+            const error = new Error(`Health check failed: ${result.errorMessage}`);
+            (error as any).healthCheckResult = result;
+            throw error;
         }
-        
-        return result;
     },
     {
         connection: redisConnection,
@@ -45,37 +46,38 @@ const monitorWorker = new Worker(
     }
 );
 
-export default monitorWorker;
-
-monitorWorker.on('completed', (job, returnvalue) => {
-    console.log(`✅ Job ${job.id} completed. Result:`, returnvalue);
-});
-
-// 1. Add 'async' here so you can use await inside
 monitorWorker.on('failed', async (job, error) => {
-    
-   
-    const monitorId = job?.data?.monitorId; 
 
-    if (!monitorId) {
-        console.error(`❌ Job ${job?.id} failed but no Monitor ID found in data.`);
+    if(!job) {
         return;
     }
 
-    try {
-       
-        const removed = await monitorQueue.removeJobScheduler(monitorId);
-        setMonitorInActiveStatus(monitorId)
+    
+    const attemptsLeft = (job.opts?.attempts||1) - job.attemptsMade;
+    
+    if (attemptsLeft > 0) {
+        // Still has retries left, don't cleanup yet
+        console.log(`⚠️ Job ${job.id} failed (attempt ${job.attemptsMade}/${job.opts?.attempts || 1}), will retry...`);
+        return;
+    }
 
+    const monitorId = job?.data?.monitorId;
+    
+    if (!monitorId) {
+        console.error(`❌ Job ${job?.id} failed but no Monitor ID found.`);
+        return;
+    }
+    
+    try {
+        const removed = await monitorQueue.removeJobScheduler(monitorId);
+        await setMonitorInActiveStatus(monitorId);
         
         if (removed) {
             console.log(`✅ Monitor ${monitorId} stopped successfully.`);
         } else {
             console.log(`⚠️ Monitor ${monitorId} not found (might already be removed).`);
         }
-    } catch (error) { // Renamed to 'err' to avoid conflict with the 'error' arg above
-        console.error(`❌ Error removing monitor ${monitorId}:`, error);
+    } catch (cleanupError) {
+        console.error(`❌ Error removing monitor ${monitorId}:`, cleanupError);
     }
 });
-
-

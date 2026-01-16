@@ -4,8 +4,8 @@ import type { AxiosRequestConfig } from 'axios';
 export interface HealthCheckResult {
     statusCode?: number;
     responseTimeMs: number;
-    errorType?: string,
-    errorMessage?: string;
+    errorType?: string | undefined;
+    errorMessage?: string | undefined;
     timestamp: Date;
     status: boolean; 
 }
@@ -35,19 +35,26 @@ export class HealthCheckService {
             const response = await axios(config);
             const duration = Math.floor(performance.now() - startTime);
 
-            // Determine if it is "UP" (usually 2xx status)
-            const isUp = response.status >= 200 && response.status < 300;
+            // Determine if it is "UP" (usually 2xx statusconst isUp = 
+            let isUp ;
+            if(response.status >= 200 && response.status < 300){
+                isUp = true;
+            }
+            else{
+                isUp = false;
+            }
 
             return {
                 statusCode: response.status,
                 responseTimeMs: duration,
                 timestamp: new Date(),
                 status: isUp,
-               // errorType: ,
-               // errorMessage: isUp ? undefined : `Request failed with status ${response.status}`
+                errorType: isUp ? undefined : 'HTTP_ERROR',
+                errorMessage: isUp ? undefined : `Request failed with status ${response.status}`
             };
 
         } catch (error: any) {
+            console.log(3);
             const duration = Math.floor(performance.now() - startTime);
             
             // Handle Network Errors (Timeout, DNS, etc.)
