@@ -81,3 +81,19 @@ monitorWorker.on('failed', async (job, error) => {
         console.error(`❌ Error removing monitor ${monitorId}:`, cleanupError);
     }
 });
+
+
+
+const gracefulShutdown = async (signal: string) => {
+    console.log(`Received ${signal}, closing worker...`);
+    
+    await monitorWorker.close();
+    
+
+    console.log('Worker closed safely. Exiting process.');
+    process.exit(0);
+};
+
+// Listen for the "Stop" signals
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
