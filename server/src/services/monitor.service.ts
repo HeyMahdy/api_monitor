@@ -1,7 +1,7 @@
 import * as monitorRepo from '../Repository/MonitorRepo.js'; 
 import type { CreateMonitorInput,Monitor, MonitorStatus } from '../schema/monitor.js';
 import myQueue  from '../queues/jobs/monitor.queue.js'
-
+import monitorQueue from '../queues/jobs/monitor.queue.js'
 
 export const createMonitor = async (data: CreateMonitorInput): Promise<Monitor> => {
   // Optional: Add business logic here (e.g., check if user has reached their max monitor limit)
@@ -36,36 +36,54 @@ export const getMonitor = async (monitorId: string, userId: string): Promise<Mon
   return monitor;
 };
 
-/**
- * Service: Update a monitor
- * Accepts a PARTIAL input, because the user might only want to change the name.
- */
+// dont make status = true . use the startMonitor to do that job
 export const updateMonitor = async (
   monitorId: string, 
   userId: string, 
   data: Partial<CreateMonitorInput>
 ): Promise<Monitor> => {
-  // The repository expects 'CreateMonitorInput', but our logic handles partials.
-  // We cast 'data' here because the Repo's dynamic SQL builder handles missing keys gracefully.
-  const updatedMonitor = await monitorRepo.updateMonitor(monitorId, userId, data as CreateMonitorInput);
+  
 
-  if (!updatedMonitor) {
-    // If null, it means either the ID doesn't exist OR the userId doesn't match
+  const monitor = await monitorRepo.updateMonitor(monitorId, userId, data as CreateMonitorInput);
+
+  if (!monitor) {
+
     throw new Error('Monitor not found or unauthorized');
   }
-
-  return updatedMonitor;
+  const result = await myQueue.removeJobScheduler(monitorId);
+console.log(
+  result ? 'Scheduler removed successfully' : 'Missing Job Scheduler',
+);
+  return monitor;
 };
 
-/**
- * Service: Delete a monitor
- */
-export const deleteMonitor = async (monitorId: string, userId: string): Promise<void> => {
-  const isDeleted = await monitorRepo.deleteMonitor(monitorId, userId);
 
-  if (!isDeleted) {
-    throw new Error('Monitor not found or unauthorized');
-  }
+
+export const deleteMonitor = async (monitorId: string, userId: string): Promise<void> => {
+  
+
+   try {
+    
+    const removed = await monitorQueue.removeJobScheduler(monitorId);
+
+    if (removed) {
+        console.log(`✅ Monitor ${monitorId} scheduler stopped.`);
+    } else {
+        console.log(`⚠️ Monitor ${monitorId} scheduler not found (might already be stopped).`);
+    }
+
+    const isDeleted = await monitorRepo.deleteMonitor(monitorId, userId);
+    
+    if (!isDeleted) {
+
+        throw new Error('Monitor not found or unauthorized');
+    }
+
+    console.log(`✅ Monitor ${monitorId} deleted from DB.`);
+
+} catch (cleanupError) {
+    console.error(`❌ Error removing monitor ${monitorId}:`, cleanupError);
+}
 };
 
 
@@ -99,8 +117,6 @@ export const startMonitor = async (monitorId: string): Promise<boolean> => {
     await monitorRepo.setMonitorActiveStatus(monitorId, true);
 
  
-
-     console.log("actibate run")
     await myQueue.upsertJobScheduler(
         monitorId,                          
         {
@@ -136,3 +152,72 @@ export const setMonitorInActiveStatus = async(monitorId: string):Promise<boolean
     console.log("inactivate run")
     return monitor;
 }
+
+
+
+
+export const getMonitorbyIdOnly = async(monitorId: string):Promise<boolean> => {
+    const monitor = monitorRepo.getmonitor(monitorId)
+    return monitor;
+}
+
+
+export const pauseMonitor = async (monitorId: string): Promise<boolean> => {
+    // 1. Update DB Status
+    await monitorRepo.setMonitorInActiveStatus(monitorId);
+
+    // 2. Stop the Scheduler (No more jobs will be created)
+    const removed = await monitorQueue.removeJobScheduler(monitorId);
+
+    if (removed) {
+        console.log(`⏸️ Monitor ${monitorId} paused (scheduler removed).`);
+    } else {
+        console.log(`⚠️ Monitor ${monitorId} was already paused.`);
+    }
+
+    return true;
+};
+
+
+export const resumeMonitor = async (monitorId: string): Promise<boolean> => {
+    // 1. Get the settings (URL, Interval, etc.)
+    const monitor = await monitorRepo.findMonitorById(monitorId);
+    
+    if (!monitor) {
+        throw new Error('Monitor not found');
+    }
+
+    // 2. Update DB Status
+    await monitorRepo.setMonitorActiveStatus(monitorId, true);
+
+    // 3. Re-Create the Scheduler
+    console.log(`▶️ Resuming Monitor ${monitorId}...`);
+    
+    await monitorQueue.upsertJobScheduler(
+        monitorId,
+        {
+            every: monitor.check_interval * 1000
+        },
+        {
+            name: 'monitor',
+            data: {
+                monitorId: monitorId,
+                url: monitor.url,
+                method: monitor.method,
+                headers: monitor.request_header,
+                body: monitor.request_body,
+                timeout: monitor.timeout,
+                userId: monitor.user_id,
+            },
+            opts: {
+                attempts: 3,
+                backoff: {
+                    type: 'fixed',
+                    delay: 2000
+                }
+            }
+        }
+    );
+
+    return true;
+};

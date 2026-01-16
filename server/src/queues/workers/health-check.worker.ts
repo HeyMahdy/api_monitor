@@ -4,6 +4,7 @@ import redisConnection from '../../config/redis.js';
 import { HealthCheckService } from '../../services/HealthCheck.service.js';
 import {setMonitorInActiveStatus} from '../../Repository/MonitorRepo.js'
 import monitorQueue from '../jobs/monitor.queue.js';
+import {getMonitorbyIdOnly} from '../../services/monitor.service.js'
 interface MonitorJobData {
     monitorId: string;
     url: string;
@@ -21,10 +22,17 @@ const monitorWorker = new Worker(
         console.log(`Job ${job.id} Checking ${method} ${url}`);
         
         const result = await HealthCheckService.check(url, method, headers, body, timeout);
+
+        const monitor =await getMonitorbyIdOnly(monitorId); /// while saving hanlde missing id would be enough
+        if(!monitor){
+            console.log(`ℹ️ Check finished, but Monitor ${monitorId} was deleted. Discarding result.`);
+            return;
+        }
        
         
         if (result.status) {
             console.log(`Job ${job.id} Success: ${result.statusCode} in ${result.responseTimeMs}ms`);
+            console.log(result)
             return result;
         } else {
             

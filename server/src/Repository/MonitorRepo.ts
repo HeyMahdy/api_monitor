@@ -163,3 +163,14 @@ const result = await pool.query(sql,[id,false]);
 return (result.rowCount || 0) > 0;
 
 }
+
+
+export const getmonitor = async (id:string):Promise<boolean> => {
+
+const sql  = `
+select * from monitors where id = $1
+`;
+const result = await pool.query(sql,[id]);
+return (result.rowCount || 0) > 0;
+
+}

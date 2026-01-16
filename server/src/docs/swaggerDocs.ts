@@ -328,6 +328,74 @@ export {};
 
 /**
  * @openapi
+ * /api/monitors/pause/{id}:
+ *   post:
+ *     tags:
+ *       - Monitors
+ *     summary: Pause a monitor
+ *     description: Stops the health check scheduler for a monitor
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Monitor ID to pause
+ *     responses:
+ *       200:
+ *         description: Monitor paused successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: success
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Error occurred while pausing monitor
+ */
+
+/**
+ * @openapi
+ * /api/monitors/resume/{id}:
+ *   post:
+ *     tags:
+ *       - Monitors
+ *     summary: Resume a monitor
+ *     description: Restarts the health check scheduler for a monitor
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Monitor ID to resume
+ *     responses:
+ *       200:
+ *         description: Monitor resumed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: success
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Error occurred while resuming monitor
+ */
+
+/**
+ * @openapi
  * /api/dev/clear-db:
  *   post:
  *     tags:

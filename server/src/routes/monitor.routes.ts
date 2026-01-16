@@ -32,5 +32,7 @@ router.delete('/:id', monitorController.deleteMonitor);
 
 
 router.post("/start/:id",monitorController.activeMonitor)
+router.post("/pause/:id",monitorController.pauseMonitor)
+router.post("/resume/:id",monitorController.resumeMonitor)
 
 export default router;

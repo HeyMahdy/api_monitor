@@ -133,11 +133,43 @@ export const activeMonitor = async (req:Request,res:Response) => {
 
       const {id} = req.params as {id:string};
 
-      const result = monitorService.startMonitor(id);
+      await monitorService.startMonitor(id);
 
-      return res.status(200).json({"messgae":"success"})
+      return res.status(200).json({"message":"success"})
   }
   catch(error:any){
-    return res.status(404).json({error:"error occured while activaing monitor"})
+    return res.status(404).json({error:"error occured while activating monitor"})
+  }
+}
+
+export const pauseMonitor = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { id } = req.params as { id: string };
+
+    await monitorService.pauseMonitor(id);
+
+    return res.status(200).json({ "message": "success" });
+  }
+  catch (error: any) {
+    return res.status(500).json({ error: "error occured while pausing monitor" });
+  }
+}
+
+export const resumeMonitor = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { id } = req.params as { id: string };
+
+    await monitorService.resumeMonitor(id);
+
+    return res.status(200).json({ "message": "success" });
+  }
+  catch (error: any) {
+    return res.status(500).json({ error: "error occured while resuming monitor" });
   }
 }
