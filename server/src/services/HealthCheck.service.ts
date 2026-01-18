@@ -2,22 +2,24 @@ import axios, { AxiosError } from 'axios';
 import type { AxiosRequestConfig } from 'axios';
 
 export interface HealthCheckResult {
+    monitorId:string;
+    method:string;
     statusCode?: number;
     responseTimeMs: number;
     errorType?: string | undefined;
     errorMessage?: string | undefined;
     timestamp: Date;
     status: boolean; 
+    url:string;
 }
 
 export class HealthCheckService {
     
-    // Task 1: The main check function
-    static async check(url: string, method: string, headers: any, body: any, timeoutSeconds: number): Promise<HealthCheckResult> {
+    
+    static async check(monitorId:string,url: string, method: string, headers: any, body: any, timeoutSeconds: number): Promise<HealthCheckResult> {
         
         const startTime = performance.now();
         
-        // Setup the shared Axios config
         const config: AxiosRequestConfig = {
             url,
             method: method || 'GET',
@@ -45,6 +47,9 @@ export class HealthCheckService {
             }
 
             return {
+                monitorId:monitorId,
+                url:url,
+                method:method,
                 statusCode: response.status,
                 responseTimeMs: duration,
                 timestamp: new Date(),
@@ -71,6 +76,9 @@ export class HealthCheckService {
             }
 
             return {
+                monitorId:monitorId,
+                url:url,
+                method:method,
                 statusCode: 0, 
                 responseTimeMs: duration,
                 timestamp: new Date(),

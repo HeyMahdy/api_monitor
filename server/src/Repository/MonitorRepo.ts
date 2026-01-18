@@ -3,7 +3,7 @@
 import { json } from 'zod';
 import {pool} from '../db/db_config.js'
 import type {CreateMonitorInput,Monitor,MonitorStatus} from '../schema/monitor.js'
-
+import type {HealthCheckResult} from '../schema/health.js'
 
 export const createMonitor = async (data: CreateMonitorInput): Promise<Monitor> => {
 
@@ -174,3 +174,42 @@ const result = await pool.query(sql,[id]);
 return (result.rowCount || 0) > 0;
 
 }
+
+
+export const createHealth = async (data: any): Promise<boolean> => { // Changed type to 'any' or your CamelCase interface temporarily to avoid TS errors
+  try {
+    console.log("inside mainn")
+    console.log(data);
+    const sql = `
+      INSERT INTO health_check_results 
+      (monitor_id,url, method,status, response_time_ms, status_code, error_type, error_message)
+      VALUES ($1, $2, $3, $4, $5, $6 , $7 , $8) RETURNING *
+    `;
+
+    const values = [
+      data.monitorId,
+      data.url,
+      data.method,
+      data.status,
+      // FIX 1: Access the property as it exists in the incoming object (CamelCase)
+      data.responseTimeMs, 
+      
+      // FIX 2: Access statusCode (CamelCase)
+      data.statusCode ?? null,
+      
+      // FIX 3: Access errorType/Message (likely CamelCase in your upstream code too)
+      data.errorType ?? null,
+      data.errorMessage ?? null
+    ];
+
+    console.log("this is values", values); // Now this should show [..., 14, 200, ...]
+
+    const x =await pool.query(sql, values);
+    console.log(x);
+    return true;
+
+  } catch (error) {
+    console.error('Failed to insert health check:', error);
+    return false;
+  }
+};

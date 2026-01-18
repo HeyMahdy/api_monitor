@@ -90,6 +90,29 @@ export {};
  *               type: string
  *               format: date-time
  *               nullable: true
+ *     HealthCheckResult:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *         monitor_id:
+ *           type: string
+ *         status:
+ *           type: boolean
+ *         response_time_ms:
+ *           type: integer
+ *         status_code:
+ *           type: integer
+ *           nullable: true
+ *         error_type:
+ *           type: string
+ *           nullable: true
+ *         error_message:
+ *           type: string
+ *           nullable: true
+ *         timestamp:
+ *           type: string
+ *           format: date-time
  */
 
 /**
@@ -392,6 +415,58 @@ export {};
  *         description: Unauthorized
  *       500:
  *         description: Error occurred while resuming monitor
+ * /api/monitors/{id}/history:
+ *   get:
+ *     tags:
+ *       - Monitors
+ *     summary: Get monitor check history (paginated)
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Monitor ID
+ *       - name: page
+ *         in: query
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - name: limit
+ *         in: query
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Number of items per page
+ *     responses:
+ *       200:
+ *         description: Monitor check history
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 results:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/HealthCheckResult'
+ *                 total:
+ *                   type: integer
+ *                 page:
+ *                   type: integer
+ *                 totalPages:
+ *                   type: integer
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden (Monitor does not belong to user)
+ *       404:
+ *         description: Monitor not found
+ *       500:
+ *         description: Internal Server Error
  */
 
 /**

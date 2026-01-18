@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import * as monitorController from '../controllers/monitor.controller.js'; 
+import * as checkResultController from '../controllers/checkResult.controller.js';
 import { authenticate } from '../middlewares/auth.middleware.js'; // Adjust path if needed
 
 const router = Router();
@@ -34,5 +35,9 @@ router.delete('/:id', monitorController.deleteMonitor);
 router.post("/start/:id",monitorController.activeMonitor)
 router.post("/pause/:id",monitorController.pauseMonitor)
 router.post("/resume/:id",monitorController.resumeMonitor)
+
+// Get monitor check history (paginated)
+// GET /api/monitors/:id/history
+router.get('/:id/history', checkResultController.getMonitorHistory);
 
 export default router;

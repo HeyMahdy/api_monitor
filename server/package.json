@@ -21,12 +21,13 @@
     "@types/node": "^25.0.5",
     "@types/pg": "^8.16.0",
     "@types/ws": "^8.18.1",
+    "concurrently": "^9.2.1",
     "tsx": "^4.21.0",
     "typescript": "^5.3.3"
   },
-  "scripts": {
-    "dev": "tsx watch src/app.ts",
-    "build": "tsc",
-    "start": "node dist/app.js"
-  }
+"scripts": {
+  "dev": "concurrently -n \"API,Monitor,DBFlush\" -c \"blue,green,yellow\" \"tsx watch src/app.ts\" \"tsx watch src/queues/workers/health-check.worker.ts\" \"tsx watch src/queues/workers/db-flush.worker.ts\"",
+  "build": "tsc",
+  "start": "node dist/app.js"
+}
 }

@@ -5,6 +5,7 @@ import { HealthCheckService } from '../../services/HealthCheck.service.js';
 import {setMonitorInActiveStatus} from '../../Repository/MonitorRepo.js'
 import monitorQueue from '../jobs/monitor.queue.js';
 import {getMonitorbyIdOnly} from '../../services/monitor.service.js'
+import {addToStream} from '../../lib/redis-stream.js'
 interface MonitorJobData {
     monitorId: string;
     url: string;
@@ -19,11 +20,15 @@ const monitorWorker = new Worker(
     async (job: Job<MonitorJobData>) => {
         const { monitorId, url, method, headers, body, timeout } = job.data;
 
+        
+
         console.log(`Job ${job.id} Checking ${method} ${url}`);
         
-        const result = await HealthCheckService.check(url, method, headers, body, timeout);
+        const result = await HealthCheckService.check(monitorId , url, method, headers, body, timeout);
+        console.log("this is it");
+        console.log(result);
 
-        const monitor =await getMonitorbyIdOnly(monitorId); /// while saving hanlde missing id would be enough
+        const monitor = await getMonitorbyIdOnly(monitorId); 
         if(!monitor){
             console.log(`ℹ️ Check finished, but Monitor ${monitorId} was deleted. Discarding result.`);
             return;
@@ -33,7 +38,7 @@ const monitorWorker = new Worker(
         if (result.status) {
             console.log(`Job ${job.id} Success: ${result.statusCode} in ${result.responseTimeMs}ms`);
             console.log(result)
-            return result;
+            await addToStream(result);
         } else {
             
             console.error(`[Job ${job.id}] Failed Health Check:`, {
@@ -42,6 +47,8 @@ const monitorWorker = new Worker(
                 errorType: result.errorType,
                 errorMessage: result.errorMessage,
             });
+
+            await addToStream(result);
             
             const error = new Error(`Health check failed: ${result.errorMessage}`);
             (error as any).healthCheckResult = result;

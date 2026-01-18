@@ -30,4 +30,22 @@ export const MonitorRowSchema = MonitorSchema.extend({
 export type Monitor = z.infer<typeof MonitorRowSchema>;
 export type MonitorStatus = z.infer<typeof MonitorStatusEnum>;
 
+export const HealthCheckResultSchema = z.object({
+  id: z.string(),
+  monitor_id: z.string(),
+  status: z.boolean(),
+  
+  // Matching SQL column names strictly
+  response_time_ms: z.number().int().nonnegative(),
+  status_code: z.number().int().nullable().optional(),
+  error_type: z.string().nullable().optional(),
+  error_message: z.string().nullable().optional(),
+  
+  // 'pg' driver returns JS Date objects for TIMESTAMPTZ
+  timestamp: z.date(), 
+});
+
+// Create a Type from the Schema
+export type HealthCheckResult = z.infer<typeof HealthCheckResultSchema>;
+
 
