@@ -1,6 +1,5 @@
 import * as monitorRepo from '../Repository/MonitorRepo.js';
 import type { CreateMonitorInput, Monitor, MonitorStatus } from '../schema/monitor.js';
-import myQueue from '../queues/jobs/monitor.queue.js'
 import monitorQueue from '../queues/jobs/monitor.queue.js'
 import type {HealthCheckResult} from '../schema/health.js'
 
@@ -10,7 +9,7 @@ export const createMonitor = async (data: CreateMonitorInput): Promise<Monitor> 
     return newMonitor;
 };
 
-/**P
+/**
  * Service: Get all monitors for a specific user
  */
 export const getUserMonitors = async (userId: string): Promise<Monitor[]> => {
@@ -51,10 +50,17 @@ export const updateMonitor = async (
 
         throw new Error('Monitor not found or unauthorized');
     }
-    const result = await myQueue.removeJobScheduler(monitorId);
+    const result = await monitorQueue.removeJobScheduler(monitorId);
     console.log(
         result ? 'Scheduler removed successfully' : 'Missing Job Scheduler',
     );
+
+    // Automated Rescheduling: If the monitor is active, restart the scheduler to apply changes
+    if (monitor.is_active) {
+        console.log(`🔄 Monitor ${monitorId} is active, rescheduling to apply updates...`);
+        await startMonitor(monitorId);
+    }
+
     return monitor;
 };
 
@@ -118,7 +124,7 @@ export const startMonitor = async (monitorId: string): Promise<boolean> => {
     await monitorRepo.setMonitorActiveStatus(monitorId, true);
 
 
-    await myQueue.upsertJobScheduler(
+    await monitorQueue.upsertJobScheduler(
         monitorId,
         {
             every: monitor.check_interval * 1000
