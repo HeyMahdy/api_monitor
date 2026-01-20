@@ -176,10 +176,8 @@ return (result.rowCount || 0) > 0;
 }
 
 
-export const createHealth = async (data: any): Promise<boolean> => { // Changed type to 'any' or your CamelCase interface temporarily to avoid TS errors
+export const createHealth = async (data: any): Promise<boolean> => {
   try {
-    console.log("inside mainn")
-    console.log(data);
     const sql = `
       INSERT INTO health_check_results 
       (monitor_id,url, method,status, response_time_ms, status_code, error_type, error_message)
@@ -191,21 +189,13 @@ export const createHealth = async (data: any): Promise<boolean> => { // Changed 
       data.url,
       data.method,
       data.status,
-      // FIX 1: Access the property as it exists in the incoming object (CamelCase)
       data.responseTimeMs, 
-      
-      // FIX 2: Access statusCode (CamelCase)
       data.statusCode ?? null,
-      
-      // FIX 3: Access errorType/Message (likely CamelCase in your upstream code too)
       data.errorType ?? null,
       data.errorMessage ?? null
     ];
 
-    console.log("this is values", values); // Now this should show [..., 14, 200, ...]
-
-    const x =await pool.query(sql, values);
-    console.log(x);
+    await pool.query(sql, values);
     return true;
 
   } catch (error) {

@@ -20,7 +20,6 @@ let shouldStop = false;
 
     try {
         await myRedisConnection.xgroup('CREATE', STREAM_KEY, GROUP_NAME, '$', 'MKSTREAM');
-        console.log("Created Consumer Group");
     } catch (err: any) {
         if (!err.message.includes('BUSYGROUP')) throw err;
     }
@@ -49,16 +48,11 @@ let shouldStop = false;
                         const rawData = fields[1];
 
                         if (!rawData) {
-                            console.warn(`Skipping message ${id}: No data found`);
                             await workerdb.xack(STREAM_KEY, GROUP_NAME, id); 
                             continue; 
                         }
 
                         const logData = JSON.parse(rawData);
-                        console.log(
-                            "this is log data"
-                        )
-                        console.log(logData)
 
                         await addhealthCheck(logData);
 

@@ -10,11 +10,8 @@ import {Authregister,Authlogin} from '../services/auth.service.js'
 
 export const register = async (req: Request, res: Response) => {
   try {
-    console.log('Register endpoint hit');
     const { email, password } = authSchema.parse(req.body);
-    console.log('Parsed data:', { email });
     await Authregister(email, password);
-    console.log('Registration successful');
     res.status(201).json({ message: 'User created' });
   } catch (error: any) {
     console.error('Registration error:', error);

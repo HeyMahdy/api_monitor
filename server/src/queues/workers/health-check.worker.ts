@@ -19,35 +19,18 @@ const monitorWorker = new Worker(
     'monitor', 
     async (job: Job<MonitorJobData>) => {
         const { monitorId, url, method, headers, body, timeout } = job.data;
-
-        
-
-        console.log(`Job ${job.id} Checking ${method} ${url}`);
         
         const result = await HealthCheckService.check(monitorId , url, method, headers, body, timeout);
-        console.log("this is it");
-        console.log(result);
 
         const monitor = await getMonitorbyIdOnly(monitorId); 
         if(!monitor){
-            console.log(`ℹ️ Check finished, but Monitor ${monitorId} was deleted. Discarding result.`);
             return;
         }
        
         
         if (result.status) {
-            console.log(`Job ${job.id} Success: ${result.statusCode} in ${result.responseTimeMs}ms`);
-            console.log(result)
             await addToStream(result);
         } else {
-            
-            console.error(`[Job ${job.id}] Failed Health Check:`, {
-                statusCode: result.statusCode,
-                responseTime: result.responseTimeMs,
-                errorType: result.errorType,
-                errorMessage: result.errorMessage,
-            });
-
             await addToStream(result);
             
             const error = new Error(`Health check failed: ${result.errorMessage}`);
@@ -72,7 +55,6 @@ monitorWorker.on('failed', async (job, error) => {
     
     if (attemptsLeft > 0) {
         // Still has retries left, don't cleanup yet
-        console.log(`⚠️ Job ${job.id} failed (attempt ${job.attemptsMade}/${job.opts?.attempts || 1}), will retry...`);
         return;
     }
 
@@ -86,12 +68,6 @@ monitorWorker.on('failed', async (job, error) => {
     try {
         const removed = await monitorQueue.removeJobScheduler(monitorId);
         await setMonitorInActiveStatus(monitorId);
-        
-        if (removed) {
-            console.log(`✅ Monitor ${monitorId} stopped successfully.`);
-        } else {
-            console.log(`⚠️ Monitor ${monitorId} not found (might already be removed).`);
-        }
     } catch (cleanupError) {
         console.error(`❌ Error removing monitor ${monitorId}:`, cleanupError);
     }

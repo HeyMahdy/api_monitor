@@ -59,7 +59,6 @@ export class HealthCheckService {
             };
 
         } catch (error: any) {
-            console.log(3);
             const duration = Math.floor(performance.now() - startTime);
             
             // Handle Network Errors (Timeout, DNS, etc.)

@@ -51,13 +51,9 @@ export const updateMonitor = async (
         throw new Error('Monitor not found or unauthorized');
     }
     const result = await monitorQueue.removeJobScheduler(monitorId);
-    console.log(
-        result ? 'Scheduler removed successfully' : 'Missing Job Scheduler',
-    );
 
     // Automated Rescheduling: If the monitor is active, restart the scheduler to apply changes
     if (monitor.is_active) {
-        console.log(`🔄 Monitor ${monitorId} is active, rescheduling to apply updates...`);
         await startMonitor(monitorId);
     }
 
@@ -73,20 +69,12 @@ export const deleteMonitor = async (monitorId: string, userId: string): Promise<
 
         const removed = await monitorQueue.removeJobScheduler(monitorId);
 
-        if (removed) {
-            console.log(`✅ Monitor ${monitorId} scheduler stopped.`);
-        } else {
-            console.log(`⚠️ Monitor ${monitorId} scheduler not found (might already be stopped).`);
-        }
-
         const isDeleted = await monitorRepo.deleteMonitor(monitorId, userId);
 
         if (!isDeleted) {
 
             throw new Error('Monitor not found or unauthorized');
         }
-
-        console.log(`✅ Monitor ${monitorId} deleted from DB.`);
 
     } catch (cleanupError) {
         console.error(`❌ Error removing monitor ${monitorId}:`, cleanupError);
@@ -156,7 +144,6 @@ export const startMonitor = async (monitorId: string): Promise<boolean> => {
 
 export const setMonitorInActiveStatus = async (monitorId: string): Promise<boolean> => {
     const monitor = monitorRepo.setMonitorInActiveStatus(monitorId)
-    console.log("inactivate run")
     return monitor;
 }
 
@@ -174,13 +161,7 @@ export const pauseMonitor = async (monitorId: string): Promise<boolean> => {
     await monitorRepo.setMonitorInActiveStatus(monitorId);
 
     // 2. Stop the Scheduler (No more jobs will be created)
-    const removed = await monitorQueue.removeJobScheduler(monitorId);
-
-    if (removed) {
-        console.log(`⏸️ Monitor ${monitorId} paused (scheduler removed).`);
-    } else {
-        console.log(`⚠️ Monitor ${monitorId} was already paused.`);
-    }
+    await monitorQueue.removeJobScheduler(monitorId);
 
     return true;
 };
@@ -198,8 +179,6 @@ export const resumeMonitor = async (monitorId: string): Promise<boolean> => {
     await monitorRepo.setMonitorActiveStatus(monitorId, true);
 
     // 3. Re-Create the Scheduler
-    console.log(`▶️ Resuming Monitor ${monitorId}...`);
-
     await monitorQueue.upsertJobScheduler(
         monitorId,
         {
@@ -230,8 +209,6 @@ export const resumeMonitor = async (monitorId: string): Promise<boolean> => {
 };
 
 export const addhealthCheck = async (data:HealthCheckResult): Promise<boolean> => {
-    
-    console.log(data)
     const result = monitorRepo.createHealth(data);
     return result;
 }
