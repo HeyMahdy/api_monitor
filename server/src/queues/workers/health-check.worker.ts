@@ -3,9 +3,9 @@ import { Worker, Job } from 'bullmq';
 import redisConnection from '../../config/redis.js';
 import { HealthCheckService } from '../../services/HealthCheck.service.js';
 import {setMonitorInActiveStatus} from '../../Repository/MonitorRepo.js'
-import monitorQueue from '../jobs/monitor.queue.js';
 import {getMonitorbyIdOnly} from '../../services/monitor.service.js'
 import {addToStream} from '../../lib/redis-stream.js'
+import {handleMonitorFailure,getIncidentById,resolveIncident} from '../../services/incident.service.js'
 interface MonitorJobData {
     monitorId: string;
     url: string;
@@ -44,6 +44,20 @@ const monitorWorker = new Worker(
     }
 );
 
+
+monitorWorker.on('completed', async (job, result) => {
+         const id = job?.data?.monitorId;
+         const incident = await getIncidentById(id)
+         if(incident){
+            if(incident.status==='OPEN'){
+                  await resolveIncident(id)
+            }
+         }
+});
+
+
+
+
 monitorWorker.on('failed', async (job, error) => {
 
     if(!job) {
@@ -64,9 +78,10 @@ monitorWorker.on('failed', async (job, error) => {
         console.error(`❌ Job ${job?.id} failed but no Monitor ID found.`);
         return;
     }
+    const healthResult = (error as any).healthCheckResult;
     
     try {
-        const removed = await monitorQueue.removeJobScheduler(monitorId);
+        await handleMonitorFailure(monitorId,healthResult);
         await setMonitorInActiveStatus(monitorId);
     } catch (cleanupError) {
         console.error(`❌ Error removing monitor ${monitorId}:`, cleanupError);

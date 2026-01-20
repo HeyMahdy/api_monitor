@@ -113,6 +113,67 @@ export {};
  *         timestamp:
  *           type: string
  *           format: date-time
+ *     Incident:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *           description: Unique incident ID
+ *         monitor_id:
+ *           type: string
+ *           format: uuid
+ *           description: The monitor this incident belongs to
+ *         status:
+ *           type: string
+ *           enum: [OPEN, ACKNOWLEDGED, RESOLVED]
+ *           description: Current incident status
+ *         severity:
+ *           type: string
+ *           enum: [CRITICAL, WARNING, INFO]
+ *           description: Incident severity level
+ *         started_at:
+ *           type: string
+ *           format: date-time
+ *           description: When the incident started
+ *         resolved_at:
+ *           type: string
+ *           format: date-time
+ *           nullable: true
+ *           description: When the incident was resolved
+ *         acknowledged_at:
+ *           type: string
+ *           format: date-time
+ *           nullable: true
+ *           description: When the incident was acknowledged
+ *         failure_count:
+ *           type: integer
+ *           description: Number of consecutive failures
+ *         error_message:
+ *           type: string
+ *           nullable: true
+ *           description: Error message from the health check
+ *     IncidentCreate:
+ *       type: object
+ *       required:
+ *         - monitor_id
+ *       properties:
+ *         monitor_id:
+ *           type: string
+ *           format: uuid
+ *         status:
+ *           type: string
+ *           enum: [OPEN, ACKNOWLEDGED, RESOLVED]
+ *           default: OPEN
+ *         severity:
+ *           type: string
+ *           enum: [CRITICAL, WARNING, INFO]
+ *           default: CRITICAL
+ *         failure_count:
+ *           type: integer
+ *           default: 1
+ *         error_message:
+ *           type: string
+ *           nullable: true
  */
 
 /**
@@ -493,4 +554,254 @@ export {};
  *                     type: string
  *       500:
  *         description: Failed to clear database
+ */
+
+/**
+ * @openapi
+ * /api/incidents:
+ *   post:
+ *     tags:
+ *       - Incidents
+ *     summary: Create a new incident
+ *     description: Manually create an incident for a monitor
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/IncidentCreate'
+ *     responses:
+ *       201:
+ *         description: Incident created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Incident'
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Failed to create incident
+ */
+
+/**
+ * @openapi
+ * /api/incidents/open:
+ *   get:
+ *     tags:
+ *       - Incidents
+ *     summary: Get all open incidents
+ *     description: Retrieve all incidents with OPEN status across all monitors
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: List of open incidents
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Incident'
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Failed to fetch open incidents
+ */
+
+/**
+ * @openapi
+ * /api/incidents/{id}:
+ *   get:
+ *     tags:
+ *       - Incidents
+ *     summary: Get incident by ID
+ *     description: Retrieve a specific incident by its ID
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Incident ID
+ *     responses:
+ *       200:
+ *         description: Incident details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Incident'
+ *       400:
+ *         description: Invalid incident ID
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Incident not found
+ *       500:
+ *         description: Failed to fetch incident
+ */
+
+/**
+ * @openapi
+ * /api/incidents/{id}:
+ *   delete:
+ *     tags:
+ *       - Incidents
+ *     summary: Delete an incident
+ *     description: Permanently delete an incident by ID
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Incident ID
+ *     responses:
+ *       200:
+ *         description: Incident deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: Invalid incident ID
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Incident not found
+ *       500:
+ *         description: Failed to delete incident
+ */
+
+/**
+ * @openapi
+ * /api/incidents/{id}/acknowledge:
+ *   patch:
+ *     tags:
+ *       - Incidents
+ *     summary: Acknowledge an incident
+ *     description: Mark an incident as acknowledged and set the acknowledged_at timestamp
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Incident ID
+ *     responses:
+ *       200:
+ *         description: Incident acknowledged successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Incident'
+ *       400:
+ *         description: Invalid incident ID
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Incident not found
+ *       500:
+ *         description: Failed to acknowledge incident
+ */
+
+/**
+ * @openapi
+ * /api/incidents/{id}/resolve:
+ *   patch:
+ *     tags:
+ *       - Incidents
+ *     summary: Resolve an incident
+ *     description: Mark an incident as resolved and set the resolved_at timestamp
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Incident ID
+ *     responses:
+ *       200:
+ *         description: Incident resolved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Incident'
+ *       400:
+ *         description: Invalid incident ID
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Incident not found
+ *       500:
+ *         description: Failed to resolve incident
+ */
+
+/**
+ * @openapi
+ * /api/monitors/{monitorId}/incidents:
+ *   get:
+ *     tags:
+ *       - Incidents
+ *     summary: Get all incidents for a monitor
+ *     description: Retrieve paginated incidents for a specific monitor
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: monitorId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Monitor UUID
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 50
+ *         description: Number of incidents to return per page
+ *       - in: query
+ *         name: offset
+ *         schema:
+ *           type: integer
+ *           default: 0
+ *         description: Number of incidents to skip
+ *     responses:
+ *       200:
+ *         description: Paginated list of incidents
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 incidents:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Incident'
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     limit:
+ *                       type: integer
+ *                     offset:
+ *                       type: integer
+ *                     count:
+ *                       type: integer
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Failed to fetch incidents
  */
