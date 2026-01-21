@@ -625,8 +625,8 @@ export {};
  *         name: id
  *         required: true
  *         schema:
- *           type: integer
- *         description: Incident ID
+ *           type: string
+ *         description: Monitor ID (UUID)
  *     responses:
  *       200:
  *         description: Incident details
@@ -659,8 +659,8 @@ export {};
  *         name: id
  *         required: true
  *         schema:
- *           type: integer
- *         description: Incident ID
+ *           type: string
+ *         description: Monitor ID (UUID)
  *     responses:
  *       200:
  *         description: Incident deleted successfully
@@ -696,8 +696,8 @@ export {};
  *         name: id
  *         required: true
  *         schema:
- *           type: integer
- *         description: Incident ID
+ *           type: string
+ *         description: Monitor ID (UUID)
  *     responses:
  *       200:
  *         description: Incident acknowledged successfully
@@ -730,8 +730,8 @@ export {};
  *         name: id
  *         required: true
  *         schema:
- *           type: integer
- *         description: Incident ID
+ *           type: string
+ *         description: Monitor ID (UUID)
  *     responses:
  *       200:
  *         description: Incident resolved successfully

@@ -85,7 +85,7 @@ export const getAllOpenIncidents = async (req: Request, res: Response) => {
  */
 export const acknowledgeIncident = async (req: Request, res: Response) => {
     try {
-        const id = (Array.isArray(req.params.id) ? req.params.id[0] : req.params.id) || '';
+        const { id } = req.params as { id: string };
         const incident = await incidentService.acknowledgeIncident(id);
 
         if (!incident) {
@@ -105,7 +105,7 @@ export const acknowledgeIncident = async (req: Request, res: Response) => {
  */
 export const resolveIncident = async (req: Request, res: Response) => {
     try {
-        const id = (Array.isArray(req.params.id) ? req.params.id[0] : req.params.id) || '';
+        const { id } = req.params as { id: string };
         const incident = await incidentService.resolveIncident(id);
 
         if (!incident) {
