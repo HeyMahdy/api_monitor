@@ -4,7 +4,7 @@ import { register, login } from '../src/controllers/auth.controller.js';
 import { authenticate } from '../src/middlewares/auth.middleware.js';
 import monitorRoutes from './routes/monitor.routes.js';
 import incidentRoutes from './routes/incident.routes.js';
-import incidentV1Routes from './routes/incident.routes.js';
+import alertChannelRoutes from './routes/alertChannel.routes.js';
 import devRoutes from './routes/dev.routes.js';
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './swagger.js';
@@ -22,7 +22,7 @@ app.post('/auth/register', register);
 app.post('/auth/login', login);
 app.use('/api/monitors', monitorRoutes);
 app.use('/api/incidents', incidentRoutes);
-app.use('/api/v1/incidents', incidentV1Routes);
+app.use('/api/v1/alert-channels', alertChannelRoutes);
 
 // Dev-only routes
 if (process.env.NODE_ENV !== 'production') {

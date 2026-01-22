@@ -152,6 +152,43 @@ export {};
  *           type: string
  *           nullable: true
  *           description: Error message from the health check
+ *     AlertChannel:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *         user_id:
+ *           type: string
+ *           format: uuid
+ *         type:
+ *           type: string
+ *           enum: [EMAIL, WEBHOOK, SLACK, DISCORD]
+ *         name:
+ *           type: string
+ *         config:
+ *           type: object
+ *           additionalProperties: true
+ *         created_at:
+ *           type: string
+ *           format: date-time
+ *         updated_at:
+ *           type: string
+ *           format: date-time
+ *     AlertChannelCreate:
+ *       type: object
+ *       required:
+ *         - type
+ *         - name
+ *       properties:
+ *         type:
+ *           type: string
+ *           enum: [EMAIL, WEBHOOK, SLACK, DISCORD]
+ *         name:
+ *           type: string
+ *         config:
+ *           type: object
+ *           additionalProperties: true
  *     IncidentCreate:
  *       type: object
  *       required:
@@ -554,6 +591,120 @@ export {};
  *                     type: string
  *       500:
  *         description: Failed to clear database
+ */
+
+/**
+ * @openapi
+ * /api/v1/alert-channels:
+ *   get:
+ *     tags:
+ *       - Alert Channels
+ *     summary: List all alert channels for the current user
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: List of alert channels
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/AlertChannel'
+ *       401:
+ *         description: Unauthorized
+ *   post:
+ *     tags:
+ *       - Alert Channels
+ *     summary: Create a new alert channel
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/AlertChannelCreate'
+ *     responses:
+ *       201:
+ *         description: Alert channel created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AlertChannel'
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Unauthorized
+ *
+ * /api/v1/alert-channels/{id}:
+ *   patch:
+ *     tags:
+ *       - Alert Channels
+ *     summary: Update an alert channel
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/AlertChannelCreate'
+ *     responses:
+ *       200:
+ *         description: Alert channel updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AlertChannel'
+ *       404:
+ *         description: Alert channel not found
+ *   delete:
+ *     tags:
+ *       - Alert Channels
+ *     summary: Delete an alert channel
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Alert channel deleted
+ *       404:
+ *         description: Alert channel not found
+ *
+ * /api/v1/alert-channels/{id}/test:
+ *   post:
+ *     tags:
+ *       - Alert Channels
+ *     summary: Test an alert channel delivery
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Test notification sent successfully
+ *       400:
+ *         description: Failed to send test notification
+ *       404:
+ *         description: Alert channel not found
  */
 
 /**

@@ -101,7 +101,7 @@ export const acknowledgeIncident = async (req: Request, res: Response) => {
 
 /**
  * Resolve an incident (by monitor_id string)
- * PATCH /api/incidents/:id/resolve
+ * PATCH /api/incidents/:id/resolvejjjm5ph 55h 55h7p7j hh7okh 5 gj8g
  */
 export const resolveIncident = async (req: Request, res: Response) => {
     try {
