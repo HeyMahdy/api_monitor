@@ -130,6 +130,8 @@ export const notifyIncidentCreated = async (
         },
     };
 
+    console.log("this is runniung");
+
     return await sendWebhook(webhookUrl, payload);
 };
 
@@ -161,7 +163,16 @@ export const notifyIncidentAcknowledged = async (
         },
     };
 
-    return await sendWebhook(webhookUrl, payload);
+    console.log("this is payload for webhook");
+    console.log(payload)
+
+    try {
+        return await sendWebhook(webhookUrl, payload);
+    } catch (error) {
+        console.error("Error sending webhook:", error);
+        return false;
+    }
+
 };
 
 /**
@@ -263,7 +274,7 @@ export const testWebhook = async (webhookUrl: string): Promise<boolean> => {
         monitor: {
             id: 'test-monitor-id',
             name: 'Test Monitor',
-            url: webhookUrl,
+            url: 'https://example.com',
             status: 'UP',
         },
         health_check: {

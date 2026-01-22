@@ -4,13 +4,20 @@ import type { Incident, CreateIncidentInput, IncidentStatus } from '../schema/in
 /**
  * Create a new incident for a monitor
  */
-export const createIncident = async (data: CreateIncidentInput): Promise<Incident> => {
+export const createIncident = async (data: CreateIncidentInput): Promise<any> => {
     const sql = `
-        INSERT INTO incidents (
-            monitor_id, status, severity, failure_count, error_message
+        WITH new_incident AS (
+            INSERT INTO incidents (
+                monitor_id, status, severity, failure_count, error_message
+            )
+            VALUES ($1, $2, $3, $4, $5)
+            RETURNING *
         )
-        VALUES ($1, $2, $3, $4, $5)
-        RETURNING *;
+        SELECT 
+            new_incident.*, 
+            to_jsonb(monitors.*) as monitor_data
+        FROM new_incident
+        JOIN monitors ON new_incident.monitor_id = monitors.id;
     `;
 
     const values = [
@@ -22,6 +29,8 @@ export const createIncident = async (data: CreateIncidentInput): Promise<Inciden
     ];
 
     const result = await pool.query(sql, values);
+    
+    // result.rows[0] will contain all incident fields + a "monitor_data" object
     return result.rows[0];
 };
 
@@ -113,24 +122,45 @@ export const updateIncidentStatus = async (
 
     if (status === 'RESOLVED') {
         sql = `
+            WITH updated_incident AS (
             UPDATE incidents
             SET status = $2, resolved_at = CURRENT_TIMESTAMP
             WHERE monitor_id = $1 AND status = 'OPEN'
-            RETURNING *;
+            RETURNING *
+        )
+        SELECT 
+            updated_incident.*, 
+            to_jsonb(monitors.*) as monitor_data
+        FROM updated_incident
+        JOIN monitors ON updated_incident.monitor_id = monitors.id;
         `;
     } else if (status === 'ACKNOWLEDGED') {
         sql = `
+          WITH updated_incident AS (
             UPDATE incidents
-            SET status = $2, acknowledged_at = CURRENT_TIMESTAMP
+            SET status = $2, resolved_at = CURRENT_TIMESTAMP
             WHERE monitor_id = $1 AND status = 'OPEN'
-            RETURNING *;
+            RETURNING *
+        )
+        SELECT 
+            updated_incident.*, 
+            to_jsonb(monitors.*) as monitor_data
+        FROM updated_incident
+        JOIN monitors ON updated_incident.monitor_id = monitors.id;
         `;
     } else {
         sql = `
+           WITH updated_incident AS (
             UPDATE incidents
-            SET status = $2
+            SET status = $2, resolved_at = CURRENT_TIMESTAMP
             WHERE monitor_id = $1 AND status = 'OPEN'
-            RETURNING *;
+            RETURNING *
+        )
+        SELECT 
+            updated_incident.*, 
+            to_jsonb(monitors.*) as monitor_data
+        FROM updated_incident
+        JOIN monitors ON updated_incident.monitor_id = monitors.id;
         `;
     }
 

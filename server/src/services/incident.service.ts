@@ -1,12 +1,14 @@
 import * as incidentRepo from '../Repository/IncidentRepo.js';
 import type { Incident, CreateIncidentInput, IncidentStatus } from '../schema/incident.js';
 import type { HealthCheckResult } from '../schema/health.js';
-
+import {NotifyIncidentCreated,NotifyIncidentAcknowledged,NotifyIncidentResolved} from '../services/alert.service.js'
 /**
  * Create a new incident
  */
-export const createIncident = async (data: CreateIncidentInput): Promise<Incident> => {
-    return await incidentRepo.createIncident(data);
+export const createIncident = async (data: CreateIncidentInput): Promise<any> => {
+    const rows = await incidentRepo.createIncident(data);
+    await NotifyIncidentCreated(data.monitor_id,rows)
+    return rows;
 };
 
 /**
@@ -56,33 +58,23 @@ export const getLatestOpenIncident = async (monitorId: string): Promise<Incident
  * Acknowledge an incident
  */
 export const acknowledgeIncident = async (id: string): Promise<Incident | null> => {
-    return await incidentRepo.updateIncidentStatus(id, 'ACKNOWLEDGED');
+    const rows = await incidentRepo.updateIncidentStatus(id,"ACKNOWLEDGED");
+    console.log(rows);
+    await NotifyIncidentAcknowledged(rows);
+    return rows;
 };
 
 /**
  * Resolve an incident
  */
 export const resolveIncident = async (id: string): Promise<Incident | null> => {
-    return await incidentRepo.updateIncidentStatus(id, 'RESOLVED');
+    const rows = await incidentRepo.updateIncidentStatus(id,"RESOLVED")
+    await NotifyIncidentResolved(rows)
+    return rows;
 };
 
-/**
- * Acknowledge the latest open incident for a monitor
- */
-export const acknowledgeByMonitorId = async (monitorId: string): Promise<Incident | null> => {
-    const openIncident = await incidentRepo.findLatestOpenIncident(monitorId);
-    if (!openIncident) return null;
-    return await incidentRepo.updateIncidentStatus(openIncident.monitor_id, 'ACKNOWLEDGED');
-};
 
-/**
- * Resolve the latest open incident for a monitor
- */
-export const resolveByMonitorId = async (monitorId: string): Promise<Incident | null> => {
-    const openIncident = await incidentRepo.findLatestOpenIncident(monitorId);
-    if (!openIncident) return null;
-    return await incidentRepo.updateIncidentStatus(openIncident.monitor_id, 'RESOLVED');
-};
+
 
 /**
  * Increment failure count for an existing incident
@@ -111,7 +103,7 @@ export const deleteIncident = async (id: string): Promise<boolean> => {
 export const handleMonitorFailure = async (
     monitorId: string,
     data: HealthCheckResult
-): Promise<Incident> => {
+): Promise<any> => {
     const existingIncident = await incidentRepo.findLatestOpenIncident(monitorId);
 
     if (existingIncident) {
@@ -121,7 +113,7 @@ export const handleMonitorFailure = async (
         }
         return updated;
     } else {
-        return await incidentRepo.createIncident({
+        return await createIncident({
             monitor_id: monitorId,
             status: "OPEN",
             severity: "CRITICAL",

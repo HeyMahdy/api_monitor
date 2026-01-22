@@ -63,3 +63,22 @@ export const deleteAlertChannel = async (id: string, userId: string): Promise<bo
     const result = await pool.query(sql, [id, userId]);
     return (result.rowCount || 0) > 0;
 };
+
+export const getAlertConfigsByMonitorId = async (monitorId: string) => {
+    const sql = `
+        SELECT 
+            alert_channels.type, 
+            alert_channels.config
+        FROM monitors
+        JOIN alert_channels ON monitors.user_id = alert_channels.user_id
+        WHERE monitors.id = $1;
+    `;
+
+    const values = [monitorId];
+
+    const result = await pool.query(sql, values);
+    
+    // Returns an array of configs (e.g., one for Email, one for Webhook)
+    // Example: [{ type: 'WEBHOOK', config: { url: '...' } }]
+    return result.rows; 
+};
