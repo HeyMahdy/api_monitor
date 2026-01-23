@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { register, login } from './controllers/auth.controller.js';
 import { authenticate } from './middlewares/auth.middleware.js';
@@ -11,6 +12,10 @@ import swaggerSpec from './swagger.js';
 
 const app = express();
 
+app.use(cors({
+  origin: ['https://pulse-guard-api.lovable.app', 'https://api-monitoring-frontend-kvmrnx0ls-mahdynafi1221-5035s-projects.vercel.app'],
+  credentials: true
+}));
 app.use(express.json());
 app.use(cookieParser()); 
 
