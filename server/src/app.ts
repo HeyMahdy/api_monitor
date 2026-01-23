@@ -1,7 +1,7 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
-import { register, login } from '../src/controllers/auth.controller.js';
-import { authenticate } from '../src/middlewares/auth.middleware.js';
+import { register, login } from './controllers/auth.controller.js';
+import { authenticate } from './middlewares/auth.middleware.js';
 import monitorRoutes from './routes/monitor.routes.js';
 import incidentRoutes from './routes/incident.routes.js';
 import alertChannelRoutes from './routes/alertChannel.routes.js';
