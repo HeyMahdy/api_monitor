@@ -13,7 +13,7 @@ import swaggerSpec from './swagger.js';
 const app = express();
 
 app.use(cors({
-  origin: ['https://api-monitoring-frontend.vercel.app', 'https://api-monitoring-frontend-kvmrnx0ls-mahdynafi1221-5035s-projects.vercel.app'],
+  origin: ['https://pulse-guard-api.lovable.app', 'https://api-monitoring-frontend-kvmrnx0ls-mahdynafi1221-5035s-projects.vercel.app'],
   credentials: true
 }));
 app.use(express.json());
