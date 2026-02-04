@@ -14,6 +14,8 @@ A comprehensive API monitoring system that tracks the availability and health of
 
 ## Documentation
 
+📖 **[Complete Documentation Index](DOCUMENTATION_INDEX.md)** - Navigate all documentation
+
 - **[API Documentation](api.README.md)**: Complete API reference with all endpoints, request/response formats, and examples
 - **[Sequence Diagrams](SEQUENCE_DIAGRAMS.md)**: Detailed sequence diagrams showing system flows and interactions
 - **[Architecture Diagram](ARCHITECTURE.md)**: System architecture, component interactions, and database schema
