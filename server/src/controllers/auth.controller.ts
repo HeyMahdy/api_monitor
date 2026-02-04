@@ -32,11 +32,11 @@ export const login = async (req: Request, res: Response) => {
     // 3. Set Cookie (Commented out for development)
 
     res.cookie('token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'none',
-      maxAge: 3600000,
-    });
+  httpOnly: true,
+  secure: true, // ALWAYS true when sameSite: 'none'
+  sameSite: 'none',
+  maxAge: 3600000,
+});
 
 
     // 4. Send Response (Token included directly)
