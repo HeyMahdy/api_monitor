@@ -32,8 +32,8 @@
     "typescript": "^5.3.3"
   },
   "scripts": {
-    "dev": "concurrently -n \"API,Monitor,DBFlush\" -c \"blue,green,yellow\" \"tsx watch src/app.ts\" \"tsx watch src/queues/workers/health-check.worker.ts\" \"tsx watch src/queues/workers/db-flush.worker.ts\"",
+    "dev": "concurrently -n \"API,Monitor,DBFlush,StatsAgg\" -c \"blue,green,yellow,magenta\" \"tsx watch src/app.ts\" \"tsx watch src/queues/workers/health-check.worker.ts\" \"tsx watch src/queues/workers/db-flush.worker.ts\" \"tsx watch src/queues/workers/stats-aggregator.worker.ts\"",
     "build": "tsc",
-    "start": "concurrently -n \"API,Monitor,DBFlush\" -c \"blue,green,yellow\" \"node dist/app.js\" \"node dist/queues/workers/health-check.worker.js\" \"node dist/queues/workers/db-flush.worker.js\""
+    "start": "concurrently -n \"API,Monitor,DBFlush,StatsAgg\" -c \"blue,green,yellow,magenta\" \"node dist/app.js\" \"node dist/queues/workers/health-check.worker.js\" \"node dist/queues/workers/db-flush.worker.js\" \"node dist/queues/workers/stats-aggregator.worker.js\""
   }
 }

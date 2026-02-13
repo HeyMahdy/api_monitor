@@ -1,6 +1,7 @@
 import * as monitorRepo from '../Repository/MonitorRepo.js';
 import type { CreateMonitorInput, Monitor, MonitorStatus } from '../schema/monitor.js';
 import monitorQueue from '../queues/jobs/monitor.queue.js'
+import scheduleStatsAggregation from '../queues/jobs/scheduleStatsAggregation.job.js';
 import type {HealthCheckResult} from '../schema/health.js'
 
 export const createMonitor = async (data: CreateMonitorInput): Promise<Monitor> => {
@@ -87,6 +88,10 @@ export const getAllActiveMonitors = async (): Promise<Monitor[]> => {
     return await monitorRepo.findAllActiveMonitors();
 };
 
+export const getActiveMonitorsForUser = async (userId: string): Promise<Monitor[]> => {
+    return await monitorRepo.findActiveMonitorsByUserId(userId);
+};
+
 /**
  * Internal: Record the result of a ping check.
  */
@@ -109,7 +114,7 @@ export const startMonitor = async (monitorId: string): Promise<boolean> => {
         throw new Error('Monitor not found');
     }
 
-    await monitorRepo.setMonitorActiveStatus(monitorId, true);
+    await monitorRepo.setMonitorActiveStatus(monitorId, true); // mybe delete
 
 
     await monitorQueue.upsertJobScheduler(
@@ -138,6 +143,8 @@ export const startMonitor = async (monitorId: string): Promise<boolean> => {
             }
         }
     );
+
+    await scheduleStatsAggregation(monitor.user_id);
 
     return true;
 };
@@ -204,6 +211,8 @@ export const resumeMonitor = async (monitorId: string): Promise<boolean> => {
             }
         }
     );
+
+    await scheduleStatsAggregation(monitor.user_id);
 
     return true;
 };
