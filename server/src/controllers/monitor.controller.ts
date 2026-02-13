@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express'; // Standard types
 import { MonitorSchema } from '../schema/monitor.js';
 import * as monitorService from '../services/monitor.service.js';
+import * as aggregatorService from '../services/Aggregator.service.js';
 
 // --- CONTROLLER FUNCTIONS ---
 
@@ -173,3 +174,27 @@ export const resumeMonitor = async (req: Request, res: Response) => {
     return res.status(500).json({ error: "error occured while resuming monitor" });
   }
 }
+
+export const getMonitorStats = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { id } = req.params as { id: string };
+
+    // First verify monitor belongs to user
+    await monitorService.getMonitor(id, userId);
+
+    const stats = await aggregatorService.getAllStatsForMonitor(id, userId);
+    return res.status(200).json(stats);
+  } catch (error: any) {
+    if (error.message === 'Monitor not found') {
+      return res.status(404).json({ error: error.message });
+    }
+    if (error.message.includes('Unauthorized')) {
+      return res.status(403).json({ error: error.message });
+    }
+    console.error(`Error fetching stats for monitor ${req.params.id}:`, error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+};

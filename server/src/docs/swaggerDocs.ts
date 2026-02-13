@@ -113,6 +113,35 @@ export {};
  *         timestamp:
  *           type: string
  *           format: date-time
+ *     MonitorStats:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *         monitor_id:
+ *           type: string
+ *         time_window:
+ *           type: string
+ *           enum: [1h, 24h, 7d, 30d]
+ *         uptime_percentage:
+ *           type: number
+ *         avg_response_time_ms:
+ *           type: number
+ *         p95_response_time_ms:
+ *           type: number
+ *         p99_response_time_ms:
+ *           type: number
+ *         success_rate_percentage:
+ *           type: number
+ *         total_checks:
+ *           type: number
+ *         successful_checks:
+ *           type: number
+ *         failed_checks:
+ *           type: number
+ *         calculated_at:
+ *           type: string
+ *           format: date-time
  *     Incident:
  *       type: object
  *       properties:
@@ -557,6 +586,41 @@ export {};
  *                   type: integer
  *                 totalPages:
  *                   type: integer
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden (Monitor does not belong to user)
+ *       404:
+ *         description: Monitor not found
+ *       500:
+ *         description: Internal Server Error
+ */
+
+/**
+ * @openapi
+ * /api/monitors/{id}/stats:
+ *   get:
+ *     tags:
+ *       - Monitors
+ *     summary: Get all stats for a monitor
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Monitor ID
+ *     responses:
+ *       200:
+ *         description: Stats for all time windows
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/MonitorStats'
  *       401:
  *         description: Unauthorized
  *       403:

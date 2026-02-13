@@ -41,6 +41,10 @@ router.post("/resume/:id",monitorController.resumeMonitor)
 // GET /api/monitors/:id/history
 router.get('/:id/history', checkResultController.getMonitorHistory);
 
+// Get monitor stats (all windows)
+// GET /api/monitors/:id/stats
+router.get('/:id/stats', monitorController.getMonitorStats);
+
 // Get monitor incidents (paginated)
 // GET /api/monitors/:monitorId/incidents
 router.get('/:monitorId/incidents', incidentController.getMonitorIncidents);

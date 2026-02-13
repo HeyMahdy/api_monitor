@@ -49,3 +49,31 @@ export const HealthCheckResultSchema = z.object({
 export type HealthCheckResult = z.infer<typeof HealthCheckResultSchema>;
 
 
+
+
+
+export const MonitorStatsSchema = z.object({
+  id: z.string(),
+  monitor_id: z.string(),
+  time_window: z.enum(['1h', '24h', '7d', '30d']),
+  
+  uptime_percentage: z.number(),
+  avg_response_time_ms: z.number(),
+
+
+  p95_response_time_ms: z.number(),
+  p99_response_time_ms: z.number(),
+  
+  success_rate_percentage: z.number(),
+  total_checks: z.number(),
+  successful_checks: z.number(),
+  failed_checks: z.number(),
+  
+  calculated_at: z.date(),
+});
+
+export type MonitorStats = z.infer<typeof MonitorStatsSchema>;
+
+
+
+
