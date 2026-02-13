@@ -69,6 +69,16 @@ export const findAllActiveMonitors = async (): Promise<Monitor[]> => {
   return result.rows;
 };
 
+export const findActiveMonitorsByUserId = async (userId: string): Promise<Monitor[]> => {
+  const sql = `
+    SELECT * FROM monitors
+    WHERE is_active = true AND user_id = $1;
+  `;
+
+  const result = await pool.query(sql, [userId]);
+  return result.rows;
+};
+
 
 
 export const updateMonitor = async (id: string, userId: string, data: CreateMonitorInput): Promise<Monitor | null> => {
@@ -155,11 +165,11 @@ export const setMonitorInActiveStatus = async (id: string): Promise<boolean> => 
 
 const sql  = `
 update monitors
-set is_active = $2 , updated_at = NOW()
+set status = $2 , updated_at = NOW()
 where id = $1;
 `;
 
-const result = await pool.query(sql,[id,false]);
+const result = await pool.query(sql,[id,'DOWN']);
 return (result.rowCount || 0) > 0;
 
 }
