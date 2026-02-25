@@ -12,6 +12,73 @@ A backend service for monitoring API uptime/health, tracking incidents, and disp
 - Swagger docs UI
 - Background workers using BullMQ + Redis for checks/aggregation/flush jobs
 
+## Current features
+
+- User authentication with `POST /auth/register` and `POST /auth/login` (JWT + cookie support)
+- Protected monitor APIs: create, list, read, update, delete, and monitor controls (`start`, `pause`, `resume`)
+- Scheduled health checks using BullMQ job schedulers with retry/backoff behavior
+- Async health-result persistence pipeline using Redis Streams + DB flush worker
+- Incident lifecycle APIs: create, list open incidents, get by id, acknowledge, resolve, delete
+- Alert channel management (CRUD + test endpoint)
+- Webhook notifications for incident created, acknowledged, and resolved events
+- Stats aggregation worker for active monitors on a recurring schedule
+- Swagger/OpenAPI docs at `/api-docs` and `/docs`
+- Development utility route: `POST /api/dev/clear-db` (non-production only)
+
+## Sequence diagram
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant U as User/Client
+    participant T as Monitored API
+    participant API as Express API
+    participant DB as PostgreSQL
+    participant Q as BullMQ + Redis
+    participant HW as Health Worker
+    participant RS as Redis Stream
+    participant DW as DB Flush Worker
+    participant IW as Incident Service
+    participant AS as Alert Service
+    participant WH as Webhook Endpoint
+    participant SW as Stats Worker
+    
+    U->>API: POST /auth/login
+    API->>DB: Validate user credentials
+    API-->>U: JWT token (+ cookie)
+
+    U->>API: POST /api/monitors
+    API->>DB: Insert monitor
+    API-->>U: Monitor created
+
+    U->>API: POST /api/monitors/start/:id
+    API->>DB: Set monitor active
+    API->>Q: upsert monitor scheduler
+    API->>Q: schedule stats aggregation
+    API-->>U: Started
+
+    loop Every check_interval
+        Q->>HW: Run monitor job
+        HW->>T: HTTP check to target URL
+        alt Check success
+            HW->>RS: add health result (UP)
+            HW->>IW: resolve open incident (if exists)
+        else Check fails after retries
+            HW->>RS: add health result (DOWN)
+            HW->>IW: create/increment OPEN incident
+            IW->>AS: incident event
+            AS->>WH: send webhook notification
+            HW->>DB: set monitor inactive
+        end
+    end
+
+    DW->>RS: read pending health results
+    DW->>DB: persist check results/history
+
+    Q->>SW: recurring stats-aggregation job
+    SW->>DB: calculate and store monitor stats
+```
+
 ## Project structure
 
 - `server/`: main backend code (TypeScript)
