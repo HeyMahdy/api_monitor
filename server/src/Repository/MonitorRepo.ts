@@ -48,6 +48,16 @@ export const findMonitorById = async (id: string): Promise<Monitor | null> => {
   return result.rows[0] || null;
 };
 
+export const findMonitorByIdAndUserId = async (id: string, userId: string): Promise<Monitor | null> => {
+  const sql = `
+    SELECT * FROM monitors
+    WHERE id = $1 AND user_id = $2;
+  `;
+
+  const result = await pool.query(sql, [id, userId]);
+  return result.rows[0] || null;
+};
+
 export const findMonitorsByUserId = async (userId: string): Promise<Monitor[]> => {
   const sql = `
     SELECT * FROM monitors 
@@ -173,6 +183,32 @@ const result = await pool.query(sql,[id,'DOWN']);
 return (result.rowCount || 0) > 0;
 
 }
+
+export const setMonitorActiveStatusForUser = async (
+  id: string,
+  userId: string,
+  isActive: boolean
+): Promise<boolean> => {
+  const sql = `
+    UPDATE monitors
+    SET is_active = $3, updated_at = NOW()
+    WHERE id = $1 AND user_id = $2;
+  `;
+
+  const result = await pool.query(sql, [id, userId, isActive]);
+  return (result.rowCount || 0) > 0;
+};
+
+export const setMonitorInActiveStatusForUser = async (id: string, userId: string): Promise<boolean> => {
+  const sql = `
+    UPDATE monitors
+    SET status = $3, updated_at = NOW()
+    WHERE id = $1 AND user_id = $2;
+  `;
+
+  const result = await pool.query(sql, [id, userId, 'DOWN']);
+  return (result.rowCount || 0) > 0;
+};
 
 
 export const getmonitor = async (id:string):Promise<boolean> => {

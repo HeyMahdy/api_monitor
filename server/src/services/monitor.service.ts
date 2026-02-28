@@ -55,7 +55,7 @@ export const updateMonitor = async (
 
     // Automated Rescheduling: If the monitor is active, restart the scheduler to apply changes
     if (monitor.is_active) {
-        await startMonitor(monitorId);
+        await startMonitor(monitorId, userId);
     }
 
     return monitor;
@@ -107,14 +107,17 @@ export const recordCheckResult = async (
 
 // ... other imports
 
-export const startMonitor = async (monitorId: string): Promise<boolean> => {
+export const startMonitor = async (monitorId: string, userId: string): Promise<boolean> => {
 
-    const monitor = await monitorRepo.findMonitorById(monitorId);
+    const monitor = await monitorRepo.findMonitorByIdAndUserId(monitorId, userId);
     if (!monitor) {
-        throw new Error('Monitor not found');
+        throw new Error('Monitor not found or unauthorized');
     }
 
-    await monitorRepo.setMonitorActiveStatus(monitorId, true); // mybe delete
+    const updated = await monitorRepo.setMonitorActiveStatusForUser(monitorId, userId, true);
+    if (!updated) {
+        throw new Error('Monitor not found or unauthorized');
+    }
 
 
     await monitorQueue.upsertJobScheduler(
@@ -163,9 +166,16 @@ export const getMonitorbyIdOnly = async (monitorId: string): Promise<boolean> =>
 }
 
 
-export const pauseMonitor = async (monitorId: string): Promise<boolean> => {
-    // 1. Update DB Status
-    await monitorRepo.setMonitorInActiveStatus(monitorId);
+export const pauseMonitor = async (monitorId: string, userId: string): Promise<boolean> => {
+    const monitor = await monitorRepo.findMonitorByIdAndUserId(monitorId, userId);
+    if (!monitor) {
+        throw new Error('Monitor not found or unauthorized');
+    }
+
+    const updated = await monitorRepo.setMonitorInActiveStatusForUser(monitorId, userId);
+    if (!updated) {
+        throw new Error('Monitor not found or unauthorized');
+    }
 
     // 2. Stop the Scheduler (No more jobs will be created)
     await monitorQueue.removeJobScheduler(monitorId);
@@ -174,16 +184,19 @@ export const pauseMonitor = async (monitorId: string): Promise<boolean> => {
 };
 
 
-export const resumeMonitor = async (monitorId: string): Promise<boolean> => {
+export const resumeMonitor = async (monitorId: string, userId: string): Promise<boolean> => {
     // 1. Get the settings (URL, Interval, etc.)
-    const monitor = await monitorRepo.findMonitorById(monitorId);
+    const monitor = await monitorRepo.findMonitorByIdAndUserId(monitorId, userId);
 
     if (!monitor) {
-        throw new Error('Monitor not found');
+        throw new Error('Monitor not found or unauthorized');
     }
 
     // 2. Update DB Status
-    await monitorRepo.setMonitorActiveStatus(monitorId, true);
+    const updated = await monitorRepo.setMonitorActiveStatusForUser(monitorId, userId, true);
+    if (!updated) {
+        throw new Error('Monitor not found or unauthorized');
+    }
 
     // 3. Re-Create the Scheduler
     await monitorQueue.upsertJobScheduler(

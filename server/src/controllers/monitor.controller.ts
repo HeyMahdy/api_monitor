@@ -134,12 +134,15 @@ export const activeMonitor = async (req:Request,res:Response) => {
 
       const {id} = req.params as {id:string};
 
-      await monitorService.startMonitor(id);
+      await monitorService.startMonitor(id, userId);
 
       return res.status(200).json({"message":"success"})
   }
   catch(error:any){
-    return res.status(404).json({error:"error occured while activating monitor"})
+    if (error.message?.includes('not found or unauthorized')) {
+      return res.status(404).json({ error: 'Monitor not found or unauthorized' });
+    }
+    return res.status(500).json({ error: "error occured while activating monitor" })
   }
 }
 
@@ -150,11 +153,14 @@ export const pauseMonitor = async (req: Request, res: Response) => {
 
     const { id } = req.params as { id: string };
 
-    await monitorService.pauseMonitor(id);
+    await monitorService.pauseMonitor(id, userId);
 
     return res.status(200).json({ "message": "success" });
   }
   catch (error: any) {
+    if (error.message?.includes('not found or unauthorized')) {
+      return res.status(404).json({ error: 'Monitor not found or unauthorized' });
+    }
     return res.status(500).json({ error: "error occured while pausing monitor" });
   }
 }
@@ -166,11 +172,14 @@ export const resumeMonitor = async (req: Request, res: Response) => {
 
     const { id } = req.params as { id: string };
 
-    await monitorService.resumeMonitor(id);
+    await monitorService.resumeMonitor(id, userId);
 
     return res.status(200).json({ "message": "success" });
   }
   catch (error: any) {
+    if (error.message?.includes('not found or unauthorized')) {
+      return res.status(404).json({ error: 'Monitor not found or unauthorized' });
+    }
     return res.status(500).json({ error: "error occured while resuming monitor" });
   }
 }
