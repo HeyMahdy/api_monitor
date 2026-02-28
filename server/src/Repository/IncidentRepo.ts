@@ -138,7 +138,7 @@ export const updateIncidentStatus = async (
         sql = `
           WITH updated_incident AS (
             UPDATE incidents
-            SET status = $2, resolved_at = CURRENT_TIMESTAMP
+            SET status = $2, acknowledged_at = CURRENT_TIMESTAMP
             WHERE monitor_id = $1 AND status = 'OPEN'
             RETURNING *
         )
@@ -152,7 +152,7 @@ export const updateIncidentStatus = async (
         sql = `
            WITH updated_incident AS (
             UPDATE incidents
-            SET status = $2, resolved_at = CURRENT_TIMESTAMP
+            SET status = $2
             WHERE monitor_id = $1 AND status = 'OPEN'
             RETURNING *
         )
