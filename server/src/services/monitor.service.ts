@@ -68,7 +68,6 @@ export const deleteMonitor = async (monitorId: string, userId: string): Promise<
 
     try {
 
-        const removed = await monitorQueue.removeJobScheduler(monitorId);
 
         const isDeleted = await monitorRepo.deleteMonitor(monitorId, userId);
 
@@ -76,6 +75,9 @@ export const deleteMonitor = async (monitorId: string, userId: string): Promise<
 
             throw new Error('Monitor not found or unauthorized');
         }
+
+        const removed = await monitorQueue.removeJobScheduler(monitorId);
+
 
     } catch (cleanupError) {
         console.error(`❌ Error removing monitor ${monitorId}:`, cleanupError);

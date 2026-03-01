@@ -9,7 +9,7 @@ export interface HealthCheckResult {
     errorType?: string | undefined;
     errorMessage?: string | undefined;
     timestamp: Date;
-    status: boolean; 
+    status: string; 
     url:string;
 }
 
@@ -39,11 +39,14 @@ export class HealthCheckService {
 
             // Determine if it is "UP" (usually 2xx statusconst isUp = 
             let isUp ;
+            let status;
             if(response.status >= 200 && response.status < 300){
                 isUp = true;
+                status = "UP";
             }
             else{
                 isUp = false;
+                status = "DOWN";
             }
 
             return {
@@ -53,7 +56,7 @@ export class HealthCheckService {
                 statusCode: response.status,
                 responseTimeMs: duration,
                 timestamp: new Date(),
-                status: isUp,
+                status: status,
                 errorType: isUp ? undefined : 'HTTP_ERROR',
                 errorMessage: isUp ? undefined : `Request failed with status ${response.status}`
             };
@@ -81,7 +84,7 @@ export class HealthCheckService {
                 statusCode: 0, 
                 responseTimeMs: duration,
                 timestamp: new Date(),
-                status: false,
+                status: "DOWN",
                 errorType:errorType,
                 errorMessage:errorMessage
             };

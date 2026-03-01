@@ -175,7 +175,7 @@ export const setMonitorInActiveStatus = async (id: string): Promise<boolean> => 
 
 const sql  = `
 update monitors
-set status = $2 , updated_at = NOW()
+set status = $2, is_active = false, updated_at = NOW()
 where id = $1;
 `;
 
@@ -202,7 +202,7 @@ export const setMonitorActiveStatusForUser = async (
 export const setMonitorInActiveStatusForUser = async (id: string, userId: string): Promise<boolean> => {
   const sql = `
     UPDATE monitors
-    SET status = $3, updated_at = NOW()
+    SET status = $3, is_active = false, updated_at = NOW()
     WHERE id = $1 AND user_id = $2;
   `;
 

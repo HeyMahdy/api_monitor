@@ -28,7 +28,7 @@ const monitorWorker = new Worker(
         }
        
         
-        if (result.status) {
+        if (result.status === "UP") {
             await addToStream(result);
         } else {
             await addToStream(result);
