@@ -142,3 +142,71 @@ export const getOneMinuteStatsLast24Hours = async (
 ): Promise<OneMinuteMetricRow[]> => {
   return await getOneMinuteStatsLast24HoursRepo(monitorId, userId);
 };
+
+export type LatencyClass = 'GOOD' | 'MEDIUM' | 'BAD';
+
+export interface MonitorPerformancePoint {
+  bucket_time: Date;
+  rpm: number;
+  avg_latency_ms: number;
+  latency_class: LatencyClass;
+}
+
+export interface MonitorPerformanceSummary {
+  monitor_id: string;
+  current_rpm: number;
+  peak_rpm: number;
+  avg_latency_ms_24h: number;
+  latency_class_24h: LatencyClass;
+  thresholds_ms: {
+    good_max: number;
+    medium_max: number;
+  };
+  points: MonitorPerformancePoint[];
+}
+
+const GOOD_MAX_MS = 200;
+const MEDIUM_MAX_MS = 500;
+
+const classifyLatency = (latencyMs: number): LatencyClass => {
+  if (latencyMs <= GOOD_MAX_MS) return 'GOOD';
+  if (latencyMs <= MEDIUM_MAX_MS) return 'MEDIUM';
+  return 'BAD';
+};
+
+export const getMonitorPerformanceLast24Hours = async (
+  monitorId: string,
+  userId: string
+): Promise<MonitorPerformanceSummary> => {
+  const rows = await getOneMinuteStatsLast24HoursRepo(monitorId, userId);
+
+  const points: MonitorPerformancePoint[] = rows.map((row) => {
+    const avgLatency = row.total_checks > 0 ? row.total_latency / row.total_checks : 0;
+    return {
+      bucket_time: row.bucket_time,
+      rpm: row.total_checks,
+      avg_latency_ms: Math.round(avgLatency),
+      latency_class: classifyLatency(avgLatency),
+    };
+  });
+
+  const current = points[points.length - 1];
+  const peak = points.reduce((max, p) => Math.max(max, p.rpm), 0);
+
+  const totalChecks = rows.reduce((sum, row) => sum + row.total_checks, 0);
+  const totalLatency = rows.reduce((sum, row) => sum + row.total_latency, 0);
+  const avgLatency24h = totalChecks > 0 ? totalLatency / totalChecks : 0;
+
+  return {
+    monitor_id: monitorId,
+    current_rpm: current?.rpm ?? 0,
+    peak_rpm: peak,
+    avg_latency_ms_24h: Math.round(avgLatency24h),
+    latency_class_24h: classifyLatency(avgLatency24h),
+    thresholds_ms: {
+      good_max: GOOD_MAX_MS,
+      medium_max: MEDIUM_MAX_MS,
+    },
+    points,
+  };
+};

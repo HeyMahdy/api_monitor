@@ -231,3 +231,27 @@ export const getMonitorOneMinuteStatsLast24Hours = async (req: Request, res: Res
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 };
+
+export const getMonitorPerformanceLast24Hours = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { id } = req.params as { id: string };
+
+    // Ownership check
+    await monitorService.getMonitor(id, userId);
+
+    const performance = await aggregatorService.getMonitorPerformanceLast24Hours(id, userId);
+    return res.status(200).json(performance);
+  } catch (error: any) {
+    if (error.message === 'Monitor not found') {
+      return res.status(404).json({ error: error.message });
+    }
+    if (error.message.includes('Unauthorized')) {
+      return res.status(403).json({ error: error.message });
+    }
+    console.error(`Error fetching performance stats for monitor ${req.params.id}:`, error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+};

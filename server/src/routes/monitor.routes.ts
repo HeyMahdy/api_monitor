@@ -49,6 +49,10 @@ router.get('/:id/stats', monitorController.getMonitorStats);
 // GET /api/monitors/:id/stats/1m
 router.get('/:id/stats/1m', monitorController.getMonitorOneMinuteStatsLast24Hours);
 
+// Get monitor performance summary (RPM, peak RPM, latency classes) for last 24h
+// GET /api/monitors/:id/stats/performance
+router.get('/:id/stats/performance', monitorController.getMonitorPerformanceLast24Hours);
+
 // Get monitor incidents (paginated)
 // GET /api/monitors/:monitorId/incidents
 router.get('/:monitorId/incidents', incidentController.getMonitorIncidents);
