@@ -10,6 +10,18 @@ export interface OneMinuteMetricRow {
   total_latency: number;
 }
 
+export interface DegradedServiceRow {
+  id: string;
+  name: string;
+  status: string;
+}
+
+export interface GlobalHealthSummaryRow {
+  active_incidents: number;
+  degraded_services: number;
+  degraded_monitors: DegradedServiceRow[];
+}
+
 
 export const upsertMonitorStats = async (stats:MonitorStats):Promise<void> => {
    
@@ -195,4 +207,51 @@ export const getOneMinuteStatsLast24Hours = async (
     total_checks: Number(row.total_checks),
     total_latency: Number(row.total_latency),
   })) as OneMinuteMetricRow[];
+};
+
+export const getGlobalHealthSummaryByUser = async (
+  userId: string
+): Promise<GlobalHealthSummaryRow> => {
+  const query = `
+    WITH degraded AS (
+      SELECT id, name, status
+      FROM monitors
+      WHERE user_id = $1
+        AND is_active = true
+        AND status = 'DOWN'
+      ORDER BY updated_at DESC
+    ),
+    open_incidents AS (
+      SELECT COUNT(*)::int AS count
+      FROM incidents i
+      JOIN monitors m ON i.monitor_id = m.id
+      WHERE i.status = 'OPEN'
+        AND m.user_id = $1
+    )
+    SELECT
+      COALESCE((SELECT count FROM open_incidents), 0)::int AS active_incidents,
+      COALESCE((SELECT COUNT(*)::int FROM degraded), 0)::int AS degraded_services,
+      COALESCE(
+        (
+          SELECT json_agg(
+            json_build_object(
+              'id', id,
+              'name', name,
+              'status', status
+            )
+          )
+          FROM degraded
+        ),
+        '[]'::json
+      ) AS degraded_monitors
+  `;
+
+  const result = await pool.query(query, [userId]);
+  const row = result.rows[0];
+
+  return {
+    active_incidents: Number(row?.active_incidents ?? 0),
+    degraded_services: Number(row?.degraded_services ?? 0),
+    degraded_monitors: (row?.degraded_monitors ?? []) as DegradedServiceRow[],
+  };
 };

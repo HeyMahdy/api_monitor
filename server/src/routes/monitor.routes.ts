@@ -20,6 +20,10 @@ router.post('/', monitorController.createMonitor);
 // GET /api/monitors
 router.get('/', monitorController.getUserMonitors);
 
+// Get global health summary for current user
+// GET /api/monitors/health/summary
+router.get('/health/summary', monitorController.getGlobalHealthSummary);
+
 // Get a specific monitor by ID
 // GET /api/monitors/:id
 router.get('/:id', monitorController.getMonitor);

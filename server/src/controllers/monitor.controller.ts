@@ -255,3 +255,16 @@ export const getMonitorPerformanceLast24Hours = async (req: Request, res: Respon
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 };
+
+export const getGlobalHealthSummary = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const summary = await aggregatorService.getGlobalHealthSummary(userId);
+    return res.status(200).json(summary);
+  } catch (error: any) {
+    console.error('Error fetching global health summary:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+};

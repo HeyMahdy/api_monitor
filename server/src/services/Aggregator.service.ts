@@ -6,7 +6,9 @@ import {
   getAllStatsForMonitor as getAllStatsForMonitorRepo,
   one_minute_stats,
   getOneMinuteStatsLast24Hours as getOneMinuteStatsLast24HoursRepo,
-  type OneMinuteMetricRow
+  getGlobalHealthSummaryByUser,
+  type OneMinuteMetricRow,
+  type DegradedServiceRow
 } from  '../Repository/AggregatorRepo.js'
 import {findResultsByMonitorIdAndTimeRange} from '../Repository/CheckResultRepo.js'
 
@@ -165,6 +167,13 @@ export interface MonitorPerformanceSummary {
   points: MonitorPerformancePoint[];
 }
 
+export interface GlobalHealthSummary {
+  overall_status: 'UP' | 'DOWN';
+  active_incidents: number;
+  degraded_services: number;
+  degraded_monitors: DegradedServiceRow[];
+}
+
 const GOOD_MAX_MS = 200;
 const MEDIUM_MAX_MS = 500;
 
@@ -208,5 +217,17 @@ export const getMonitorPerformanceLast24Hours = async (
       medium_max: MEDIUM_MAX_MS,
     },
     points,
+  };
+};
+
+export const getGlobalHealthSummary = async (userId: string): Promise<GlobalHealthSummary> => {
+  const summary = await getGlobalHealthSummaryByUser(userId);
+  const overallStatus = summary.active_incidents > 0 || summary.degraded_services > 0 ? 'DOWN' : 'UP';
+
+  return {
+    overall_status: overallStatus,
+    active_incidents: summary.active_incidents,
+    degraded_services: summary.degraded_services,
+    degraded_monitors: summary.degraded_monitors,
   };
 };
