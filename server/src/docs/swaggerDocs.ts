@@ -142,6 +142,81 @@ export {};
  *         calculated_at:
  *           type: string
  *           format: date-time
+ *     OneMinuteMetric:
+ *       type: object
+ *       properties:
+ *         monitor_id:
+ *           type: string
+ *         bucket_time:
+ *           type: string
+ *           format: date-time
+ *         total_checks:
+ *           type: integer
+ *         total_latency:
+ *           type: integer
+ *     MonitorPerformancePoint:
+ *       type: object
+ *       properties:
+ *         bucket_time:
+ *           type: string
+ *           format: date-time
+ *         rpm:
+ *           type: integer
+ *         avg_latency_ms:
+ *           type: integer
+ *         latency_class:
+ *           type: string
+ *           enum: [GOOD, MEDIUM, BAD]
+ *     MonitorPerformanceSummary:
+ *       type: object
+ *       properties:
+ *         monitor_id:
+ *           type: string
+ *         current_rpm:
+ *           type: integer
+ *         peak_rpm:
+ *           type: integer
+ *         avg_latency_ms_24h:
+ *           type: integer
+ *         latency_class_24h:
+ *           type: string
+ *           enum: [GOOD, MEDIUM, BAD]
+ *         thresholds_ms:
+ *           type: object
+ *           properties:
+ *             good_max:
+ *               type: integer
+ *               example: 200
+ *             medium_max:
+ *               type: integer
+ *               example: 500
+ *         points:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/MonitorPerformancePoint'
+ *     DegradedMonitor:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *         name:
+ *           type: string
+ *         status:
+ *           type: string
+ *     GlobalHealthSummary:
+ *       type: object
+ *       properties:
+ *         overall_status:
+ *           type: string
+ *           enum: [UP, DOWN]
+ *         active_incidents:
+ *           type: integer
+ *         degraded_services:
+ *           type: integer
+ *         degraded_monitors:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/DegradedMonitor'
  *     Incident:
  *       type: object
  *       properties:
@@ -598,6 +673,28 @@ export {};
 
 /**
  * @openapi
+ * /api/monitors/health/summary:
+ *   get:
+ *     tags:
+ *       - Monitors
+ *     summary: Get global health summary for the current user
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Global health summary
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/GlobalHealthSummary'
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Internal Server Error
+ */
+
+/**
+ * @openapi
  * /api/monitors/{id}/stats:
  *   get:
  *     tags:
@@ -621,6 +718,75 @@ export {};
  *               type: array
  *               items:
  *                 $ref: '#/components/schemas/MonitorStats'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden (Monitor does not belong to user)
+ *       404:
+ *         description: Monitor not found
+ *       500:
+ *         description: Internal Server Error
+ */
+
+/**
+ * @openapi
+ * /api/monitors/{id}/stats/1m:
+ *   get:
+ *     tags:
+ *       - Monitors
+ *     summary: Get 1-minute metric buckets for the last 24 hours
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Monitor ID
+ *     responses:
+ *       200:
+ *         description: 1-minute metric rows for the last 24h
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/OneMinuteMetric'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden (Monitor does not belong to user)
+ *       404:
+ *         description: Monitor not found
+ *       500:
+ *         description: Internal Server Error
+ */
+
+/**
+ * @openapi
+ * /api/monitors/{id}/stats/performance:
+ *   get:
+ *     tags:
+ *       - Monitors
+ *     summary: Get monitor performance summary for last 24 hours
+ *     description: Returns RPM, peak RPM, average latency, and latency classification with per-minute points.
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Monitor ID
+ *     responses:
+ *       200:
+ *         description: Monitor performance summary
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/MonitorPerformanceSummary'
  *       401:
  *         description: Unauthorized
  *       403:
