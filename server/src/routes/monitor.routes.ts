@@ -45,6 +45,10 @@ router.get('/:id/history', checkResultController.getMonitorHistory);
 // GET /api/monitors/:id/stats
 router.get('/:id/stats', monitorController.getMonitorStats);
 
+// Get monitor 1-minute metrics for the last 24 hours
+// GET /api/monitors/:id/stats/1m
+router.get('/:id/stats/1m', monitorController.getMonitorOneMinuteStatsLast24Hours);
+
 // Get monitor incidents (paginated)
 // GET /api/monitors/:monitorId/incidents
 router.get('/:monitorId/incidents', incidentController.getMonitorIncidents);

@@ -3,6 +3,12 @@
 import { pool } from '../db/db_config.js';
 import type { MonitorStats } from '../schema/monitor.js';
 
+export interface OneMinuteMetricRow {
+  monitor_id: string;
+  bucket_time: Date;
+  total_checks: number;
+  total_latency: number;
+}
 
 
 export const upsertMonitorStats = async (stats:MonitorStats):Promise<void> => {
@@ -144,4 +150,49 @@ export const deleteMonitorStats = async (
   `;
   
   await pool.query(query, [monitorId, userId]);
+};
+
+
+export const one_minute_stats = async (monitorId: string , latency : number):Promise<void>=>{
+  const bucketTime = new Date();
+  bucketTime.setSeconds(0, 0);
+
+  const query = `
+    INSERT INTO monitor_metrics_1m (monitor_id, bucket_time, total_checks, total_latency)
+    VALUES ($1, $2, 1, $3)
+    ON CONFLICT (monitor_id, bucket_time)
+    DO UPDATE SET
+      total_checks = monitor_metrics_1m.total_checks + 1,
+      total_latency = monitor_metrics_1m.total_latency + EXCLUDED.total_latency
+  `;
+
+  await pool.query(query, [monitorId, bucketTime, latency]);
+}
+
+export const getOneMinuteStatsLast24Hours = async (
+  monitorId: string,
+  userId: string
+): Promise<OneMinuteMetricRow[]> => {
+  const query = `
+    SELECT
+      mm.monitor_id,
+      mm.bucket_time,
+      mm.total_checks,
+      mm.total_latency
+    FROM monitor_metrics_1m mm
+    JOIN monitors m ON mm.monitor_id = m.id
+    WHERE mm.monitor_id = $1
+      AND m.user_id = $2
+      AND mm.bucket_time >= NOW() - INTERVAL '24 hours'
+    ORDER BY mm.bucket_time ASC
+  `;
+
+  const result = await pool.query(query, [monitorId, userId]);
+
+  return result.rows.map((row) => ({
+    monitor_id: row.monitor_id,
+    bucket_time: row.bucket_time,
+    total_checks: Number(row.total_checks),
+    total_latency: Number(row.total_latency),
+  })) as OneMinuteMetricRow[];
 };

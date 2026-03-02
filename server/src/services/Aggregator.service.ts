@@ -1,9 +1,18 @@
 
 import { any } from 'zod';
 import type { CreateMonitorInput , MonitorStats } from '../schema/monitor.js';
-import {upsertMonitorStats, getAllStatsForMonitor as getAllStatsForMonitorRepo} from  '../Repository/AggregatorRepo.js'
+import {
+  upsertMonitorStats,
+  getAllStatsForMonitor as getAllStatsForMonitorRepo,
+  one_minute_stats,
+  getOneMinuteStatsLast24Hours as getOneMinuteStatsLast24HoursRepo,
+  type OneMinuteMetricRow
+} from  '../Repository/AggregatorRepo.js'
 import {findResultsByMonitorIdAndTimeRange} from '../Repository/CheckResultRepo.js'
 
+export const saveOneMinuteStats = async (monitorId: string, latency: number): Promise<void> => {
+  await one_minute_stats(monitorId, latency);
+};
 
 
 export const calculateAllWindowsForMonitor = async(monitorId: string,userId:string):Promise<void> => {
@@ -125,4 +134,11 @@ export const getAllStatsForMonitor = async (
   userId: string
 ): Promise<MonitorStats[]> => {
   return await getAllStatsForMonitorRepo(monitorId, userId);
+};
+
+export const getOneMinuteStatsLast24Hours = async (
+  monitorId: string,
+  userId: string
+): Promise<OneMinuteMetricRow[]> => {
+  return await getOneMinuteStatsLast24HoursRepo(monitorId, userId);
 };

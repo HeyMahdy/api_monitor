@@ -6,6 +6,7 @@ import {setMonitorInActiveStatus} from '../../Repository/MonitorRepo.js'
 import {getMonitorbyIdOnly} from '../../services/monitor.service.js'
 import {addToStream} from '../../lib/redis-stream.js'
 import {handleMonitorFailure,getIncidentById,resolveIncident} from '../../services/incident.service.js'
+import { saveOneMinuteStats } from '../../services/Aggregator.service.js';
 interface MonitorJobData {
     monitorId: string;
     url: string;
@@ -21,6 +22,11 @@ const monitorWorker = new Worker(
         const { monitorId, url, method, headers, body, timeout } = job.data;
         
         const result = await HealthCheckService.check(monitorId , url, method, headers, body, timeout);
+        try {
+            await saveOneMinuteStats(monitorId, result.responseTimeMs);
+        } catch (metricError) {
+            console.error(`❌ Failed to save 1m metric for monitor ${monitorId}:`, metricError);
+        }
 
         const monitor = await getMonitorbyIdOnly(monitorId); 
         if(!monitor){
